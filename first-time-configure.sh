@@ -36,6 +36,11 @@ config_ui() {
 	ooc theming:config color "#003D8F"
 	ooc theming:config disable-user-theming yes
 	ooc config:app:set theming backgroundMime --value backgroundColor
+
+	echo "Configure share settings"
+
+	ooc config:app:set --value="no" core shareapi_only_share_with_group_members
+	ooc config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 }
 
 add_config_partials() {
