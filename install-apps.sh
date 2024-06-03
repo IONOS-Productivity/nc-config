@@ -72,6 +72,23 @@ install_oidc() {
 	fi
 }
 
+install_app_metadata() {
+	name="metadata"
+	version="v0.20.0"
+	download_url="https://github.com/gino0631/nextcloud-metadata/releases/download/${version}/metadata.tar.gz"
+	sha="16c7642a717e85786bc372956162eeec5377e0f305d2638ce3eb6f07c233997c"
+
+	echo "Install app '${name}' ${version} ..."
+
+	download_verify_install_app "${name}" "${download_url}" "${sha}"
+
+	ooc app:enable "${name}"
+
+	if [ ${?} -ne 0 ]; then
+		fail "Enabling app \"${name}\" failed."
+	fi
+}
+
 main() {
 	if ! which wget >/dev/null 2>&1; then
 		fail "Error: wget is required"
@@ -88,6 +105,7 @@ main() {
 	echo "Install and enable apps ..."
 
 	install_oidc
+	install_app_metadata
 }
 
 main
