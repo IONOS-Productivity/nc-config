@@ -55,7 +55,7 @@ download_verify_install_app() {
 	rm "${temp_package_file}" "${temp_sha_file}" || echo "Removing temporary download file ${temp_package_file} failed. Continuing."
 }
 
-install_oidc() {
+download_oidc() {
 	name="user_oidc"
 	version="v5.0.2"
 	download_url="https://github.com/nextcloud-releases/${name}/releases/download/${version}/${name}-${version}.tar.gz"
@@ -64,12 +64,6 @@ install_oidc() {
 	echo "Install app '${name}' ${version} ..."
 
 	download_verify_install_app "${name}" "${download_url}" "${sha}"
-
-	ooc app:enable "${name}"
-
-	if [ ${?} -ne 0 ]; then
-		fail "Enabling app \"${name}\" failed."
-	fi
 }
 
 main() {
@@ -87,7 +81,19 @@ main() {
 
 	echo "Install and enable apps ..."
 
-	install_oidc
+	download_oidc
+
+	echo "Enable apps in folder $APPS_DIR ..."
+
+	for app in $( find "${APPS_DIR}" -mindepth 1 -maxdepth 1 -type d); do
+		app_name="$( basename "${app}" )"
+		echo "Enable app '${app_name}' ..."
+
+		if ! ooc app:enable "${app_name}"
+		then
+			fail "Enabling app \"${app_name}\" failed."
+		fi
+	done
 }
 
 main
