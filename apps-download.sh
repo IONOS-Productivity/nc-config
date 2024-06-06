@@ -8,17 +8,12 @@ BDIR="$( dirname "${0}" )"
 NEXTCLOUD_DIR="${BDIR}/.."
 APPS_DIR="${NEXTCLOUD_DIR}/apps-external"
 
-ooc() {
-	php occ \
-		"${@}"
-}
-
 fail() {
 	echo "${*}"
 	exit 1
 }
 
-download_verify_install_app() {
+download_verify_app() {
 	# Download file from the supplied URL, check the supplied SHA256 and install
 	#
 	# name - app name
@@ -61,9 +56,9 @@ download_oidc() {
 	download_url="https://github.com/nextcloud-releases/${name}/releases/download/${version}/${name}-${version}.tar.gz"
 	sha="7a6b981f3e0c388c52e658af966d27f26815e4d1175efca4db4bf975911538e8"
 
-	echo "Install app '${name}' ${version} ..."
+	echo "Download app '${name}' ${version} ..."
 
-	download_verify_install_app "${name}" "${download_url}" "${sha}"
+	download_verify_app "${name}" "${download_url}" "${sha}"
 }
 
 main() {
@@ -79,21 +74,9 @@ main() {
 		fail "Apps directory does not exist: $( readlink -f "${APPS_DIR}" )"
 	fi
 
-	echo "Install and enable apps ..."
+	echo "Download apps ..."
 
 	download_oidc
-
-	echo "Enable apps in folder $APPS_DIR ..."
-
-	for app in $( find "${APPS_DIR}" -mindepth 1 -maxdepth 1 -type d); do
-		app_name="$( basename "${app}" )"
-		echo "Enable app '${app_name}' ..."
-
-		if ! ooc app:enable "${app_name}"
-		then
-			fail "Enabling app \"${app_name}\" failed."
-		fi
-	done
 }
 
 main
