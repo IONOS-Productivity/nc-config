@@ -6,7 +6,6 @@
 BDIR="$( dirname "${0}" )"
 
 NEXTCLOUD_DIR="${BDIR}/.."
-APPS_DIR="${NEXTCLOUD_DIR}/apps-external"
 
 ooc() {
 	php "${NEXTCLOUD_DIR}/occ" \
@@ -18,15 +17,18 @@ fail() {
 	exit 1
 }
 
+enable_apps() {
+	# Enable app in given directory
+	#
+	apps_dir="${1}"
 
-main() {
-	if [ ! -d "${APPS_DIR}" ]; then
-		fail "Apps directory does not exist: $( readlink -f "${APPS_DIR}" )"
+	if [ ! -d "${apps_dir}" ]; then
+		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
 	fi
 
-	echo "Enable apps in folder $APPS_DIR ..."
+	echo "Enable apps in folder ${apps_dir} ..."
 
-	for app in $( find "${APPS_DIR}" -mindepth 1 -maxdepth 1 -type d); do
+	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d); do
 		app_name="$( basename "${app}" )"
 		echo "Enable app '${app_name}' ..."
 
@@ -35,6 +37,11 @@ main() {
 			fail "Enabling app \"${app_name}\" failed."
 		fi
 	done
+}
+
+main() {
+	enable_apps "${NEXTCLOUD_DIR}/apps-external"
+	enable_apps "${NEXTCLOUD_DIR}/apps-custom"
 }
 
 main
