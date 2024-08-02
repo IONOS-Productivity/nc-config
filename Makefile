@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=easy-storage.zip
 
-.PHONY: add_config_partials build build_locally ionos_theme simplesettings_app user_oidc_app zip_dependencies
+.PHONY: add_config_partials build_release build_locally ionos_theme simplesettings_app user_oidc_app zip_dependencies
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -84,7 +84,7 @@ zip_dependencies: ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-build: simplesettings_app user_oidc_app ionos_theme add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
+build_release: simplesettings_app user_oidc_app ionos_theme add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
 build_locally: simplesettings_app user_oidc_app ionos_theme ## Build all apps/themes for local development
