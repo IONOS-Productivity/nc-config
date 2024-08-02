@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=easy-storage.zip
 
-.PHONY: all
+.PHONY: add_config_partials build build_locally ionos_theme simplesettings_app user_oidc_app zip_dependencies
 
 help: ## This help.
 	@echo "Usage: make [target]"
