@@ -15,26 +15,25 @@ help: ## This help.
 .DEFAULT_GOAL := help
 
 simplesettings_app: ## Install and build simplesettings app
-	cd ../apps-custom/simplesettings && \
+	cd apps-custom/simplesettings && \
 	npm ci && \
 	npm run build
 
 user_oidc_app: ## Install and build user_oidc app
-	cd ../apps-external/user_oidc && \
+	cd apps-external/user_oidc && \
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
 
 ionos_theme: ## Install and build ionos theme
-	cd ../themes/nc-ionos-theme/IONOS && \
+	cd themes/nc-ionos-theme/IONOS && \
 	npm ci && \
 	npm run build
 
 add_config_partials: ## Copy custom config files to Nextcloud config 
-	cp configs/*.config.php ../config/
+	cp IONOS/configs/*.config.php config/
 
 zip_dependencies: ## Zip relevant files
-	cd ../ && \
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef '{buildDate: $$buildDate, buildRef: $$buildRef}' > version.json && \
