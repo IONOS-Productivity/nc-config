@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=easy-storage.zip
 
-.PHONY: .build_deps add_config_partials build_release build_locally ionos_theme simplesettings_app user_oidc_app zip_dependencies
+.PHONY: .build_deps add_config_partials build_dep_ionos_theme build_dep_simplesettings_app build_dep_user_oidc_app build_locally build_release zip_dependencies
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -14,18 +14,18 @@ help: ## This help.
 # thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .DEFAULT_GOAL := help
 
-simplesettings_app: ## Install and build simplesettings app
+build_dep_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
 	npm ci && \
 	npm run build
 
-user_oidc_app: ## Install and build user_oidc app
+build_dep_user_oidc_app: ## Install and build user_oidc app
 	cd apps-external/user_oidc && \
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
 
-ionos_theme: ## Install and build ionos theme
+build_dep_ionos_theme: ## Install and build ionos theme
 	cd themes/nc-ionos-theme/IONOS && \
 	npm ci && \
 	npm run build
@@ -84,7 +84,7 @@ zip_dependencies: ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-.build_deps: simplesettings_app user_oidc_app ionos_theme
+.build_deps: build_dep_simplesettings_app build_dep_user_oidc_app build_dep_ionos_theme
 
 build_release: .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
