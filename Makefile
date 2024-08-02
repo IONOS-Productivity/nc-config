@@ -15,26 +15,26 @@ help: ## This help.
 .DEFAULT_GOAL := help
 
 simplesettings_app: ## Install and build simplesettings app
-	@(cd ../apps-custom/simplesettings && \
+	cd ../apps-custom/simplesettings && \
 	npm ci && \
-	npm run build)
+	npm run build
 
 user_oidc_app: ## Install and build user_oidc app
-	@(cd ../apps-external/user_oidc && \
+	cd ../apps-external/user_oidc && \
 	composer install --no-dev -o && \
 	npm ci && \
-	npm run build)
+	npm run build
 
 ionos_theme: ## Install and build ionos theme
-	@(cd ../themes/nc-ionos-theme/IONOS && \
+	cd ../themes/nc-ionos-theme/IONOS && \
 	npm ci && \
-	npm run build)
+	npm run build
 
 add_config_partials: ## Copy custom config files to Nextcloud config 
 	cp configs/*.config.php ../config/
 
 zip_dependencies: ## Zip relevant files
-	@(cd ../ && \
+	cd ../ && \
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef '{buildDate: $$buildDate, buildRef: $$buildRef}' > version.json && \
@@ -83,10 +83,10 @@ zip_dependencies: ## Zip relevant files
 	-x "*.git*" \
 	-x "*.editorconfig*" \
 	-x "themes/nc-ionos-theme/README.md" \
-	-x "themes/nc-ionos-theme/IONOS**")
+	-x "themes/nc-ionos-theme/IONOS**"
 
 build: simplesettings_app user_oidc_app ionos_theme add_config_partials zip_dependencies ## All of the above
-	@echo "Everything done"
+	echo "Everything done"
 
 build_locally: simplesettings_app user_oidc_app ionos_theme zip_dependencies ## All of the above without copying config files
-	@echo "Everything done"
+	echo "Everything done"
