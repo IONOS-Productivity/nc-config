@@ -85,8 +85,8 @@ zip_dependencies: ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-build: simplesettings_app user_oidc_app ionos_theme add_config_partials zip_dependencies ## All of the above
+build: simplesettings_app user_oidc_app ionos_theme add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
-build_locally: simplesettings_app user_oidc_app ionos_theme zip_dependencies ## All of the above without copying config files
+build_locally: simplesettings_app user_oidc_app ionos_theme zip_dependencies ## Build all apps/themes for local development
 	echo "Everything done for local/dev"
