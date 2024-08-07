@@ -23,6 +23,10 @@ checks() {
 	if ! which jq >/dev/null 2>&1; then
 		fail "Error: jq is required"
 	fi
+
+	if ! which php >/dev/null 2>&1; then
+		fail "Error: php is required"
+	fi
 }
 
 main() {
@@ -40,6 +44,13 @@ main() {
 			| jq --arg toUnforce "${app}" 'del(.defaultEnabled[] | select(. == $toUnforce))' \
 			| jq --arg toUnforce "${app}" 'del(.alwaysEnabled[] | select(. == $toUnforce))' > ${SHIPPED_JSON}.tmp \
 				&& mv ${SHIPPED_JSON}.tmp ${SHIPPED_JSON}
+	done
+
+	echo "Disable apps ..."
+
+	for app in ${DISABLED_APPS}; do
+		echo "Disable app '${app}' ..."
+		php occ app:disable ${app}
 	done
 }
 
