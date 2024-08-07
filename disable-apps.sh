@@ -19,10 +19,14 @@ fail() {
 	exit 1
 }
 
-main() {
-	if ! which jq 2>&1 >/dev/null; then
+checks() {
+	if ! which jq >/dev/null 2>&1; then
 		fail "Error: jq is required"
 	fi
+}
+
+main() {
+	checks
 
 	# alwaysEnabled should be the only attribute in this json file which really matters,
 	# since it is the only attribute, which is checked for which app can be disabled or not.
