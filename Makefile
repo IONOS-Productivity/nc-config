@@ -30,7 +30,7 @@ build_dep_ionos_theme: ## Install and build ionos theme
 	npm ci && \
 	npm run build
 
-add_config_partials: ## Copy custom config files to Nextcloud config 
+add_config_partials: ## Copy custom config files to Nextcloud config
 	cp IONOS/configs/*.config.php config/
 
 zip_dependencies: ## Zip relevant files
