@@ -25,6 +25,12 @@ build_dep_user_oidc_app: ## Install and build user_oidc app
 	npm ci && \
 	npm run build
 
+build_dep_viewer_app: ## Install and build viewer app
+	cd apps-external/viewer && \
+	composer install --no-dev -o && \
+	npm ci && \
+	npm run build
+
 build_dep_ionos_theme: ## Install and build ionos theme
 	cd themes/nc-ionos-theme/IONOS && \
 	npm ci && \
@@ -84,7 +90,7 @@ zip_dependencies: ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-.build_deps: build_dep_simplesettings_app build_dep_user_oidc_app build_dep_ionos_theme
+.build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_user_oidc_app build_dep_ionos_theme
 
 build_release: .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
