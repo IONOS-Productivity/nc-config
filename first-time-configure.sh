@@ -39,6 +39,11 @@ config_ui() {
 	ooc config:system:set defaultapp --value files
 }
 
+config_apps() {
+	echo "Configure apps"
+	occ config:app:set --value yes --type string viewer always_show_viewer
+}
+
 add_config_partials() {
 	echo "Add config partials ..."
 
@@ -85,6 +90,7 @@ main() {
 
 	add_config_partials
 	config_server
+	config_apps
 	config_ui
 }
 
