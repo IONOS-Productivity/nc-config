@@ -14,7 +14,12 @@ help: ## This help.
 # thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .DEFAULT_GOAL := help
 
-build_nextcloud: ## Build Nextcloud
+build_vue_icons_package: ## Build custom vue icons package
+	cd custom-npms/nc-vue-material-design-icons && \
+	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
+	npm run build
+
+build_nextcloud: build_vue_icons_package ## Build Nextcloud
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
