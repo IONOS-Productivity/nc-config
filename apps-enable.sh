@@ -28,7 +28,7 @@ enable_apps() {
 
 	echo "Enable apps in folder ${apps_dir} ..."
 
-	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d); do
+	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d | sort); do
 		app_name="$( basename "${app}" )"
 		echo "Enable app '${app_name}' ..."
 
