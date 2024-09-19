@@ -14,6 +14,11 @@ help: ## This help.
 # thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .DEFAULT_GOAL := help
 
+build_nextcloud: ## Build Nextcloud
+	composer install --no-dev -o && \
+	npm ci && \
+	npm run build
+
 build_dep_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
 	npm ci && \
@@ -92,7 +97,7 @@ zip_dependencies: ## Zip relevant files
 
 .build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_user_oidc_app build_dep_ionos_theme
 
-build_release: .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
+build_release: .build_deps build_nextcloud add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
 build_locally: .build_deps ## Build all apps/themes for local development
