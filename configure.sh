@@ -34,7 +34,7 @@ config_server() {
 config_ui() {
 	echo "Configure theming"
 
-	ooc theming:config name "EasyStorage"
+	ooc theming:config name "HiDrive Next"
 	ooc theming:config color "#003D8F"
 	ooc theming:config disable-user-theming yes
 	ooc config:app:set theming backgroundMime --value backgroundColor
