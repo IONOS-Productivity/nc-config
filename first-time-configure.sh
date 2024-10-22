@@ -27,6 +27,7 @@ config_server() {
 
 	ooc config:system:set lookup_server --value=""
 	ooc user:setting admin settings email admin@example.net
+	ooc config:app:set --value '["files","settings"]' --type array core unified_search.providers_allowed
 }
 
 config_ui() {
