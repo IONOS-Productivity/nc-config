@@ -42,6 +42,9 @@ config_ui() {
 config_apps() {
 	echo "Configure apps"
 	ooc config:app:set --value yes --type string viewer always_show_viewer
+	# To disable entering the user@host ID of an external Nextcloud instance
+	# in the (uncustomized) search input field of the share panel
+	ooc config:app:set --value no files_sharing outgoing_server2server_share_enabled
 }
 
 add_config_partials() {
