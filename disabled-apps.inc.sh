@@ -13,7 +13,6 @@ privacy
 recommendations
 related_resources
 serverinfo
-sharebymail
 support
 survey_client
 systemtags
