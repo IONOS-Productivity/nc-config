@@ -42,8 +42,20 @@ config_ui() {
 }
 
 config_apps() {
-	echo "Configure apps"
+	echo "Configure apps ..."
+
+	echo "Configure viewer app"
 	ooc config:app:set --value yes --type string viewer always_show_viewer
+
+	echo "Disable federated sharing"
+	# To disable entering the user@host ID of an external Nextcloud instance
+	# in the (uncustomized) search input field of the share panel
+	ooc config:app:set --value no files_sharing outgoing_server2server_share_enabled
+	ooc config:app:set --value no files_sharing incoming_server2server_share_enabled
+	ooc config:app:set --value no files_sharing outgoing_server2server_group_share_enabled
+	ooc config:app:set --value no files_sharing incoming_server2server_group_share_enabled
+	ooc config:app:set --value no files_sharing lookupServerEnabled
+	ooc config:app:set --value no files_sharing lookupServerUploadEnabled
 }
 
 add_config_partials() {
