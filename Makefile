@@ -114,5 +114,5 @@ zip_dependencies: ## Zip relevant files
 build_release: .build_deps build_nextcloud add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
-build_locally: .build_deps  build_nextcloud ## Build all apps/themes for local development
+build_locally: .build_deps build_nextcloud ## Build all apps/themes for local development
 	echo "Everything done for local/dev"
