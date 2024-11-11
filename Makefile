@@ -19,12 +19,17 @@ build_mdi_svg: ## Build custom mdi svg
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
 	npm run build
 
+build_mdi_js: ## Build custom mdi js
+	cd custom-npms/nc-mdi-js && \
+	npm ci && \
+	npm run build
+
 build_vue_icons_package: ## Build custom vue icons package
 	cd custom-npms/nc-vue-material-design-icons && \
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
 	npm run build
 
-build_nextcloud: build_mdi_svg build_vue_icons_package ## Build Nextcloud
+build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package ## Build Nextcloud
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
