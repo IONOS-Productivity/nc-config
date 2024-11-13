@@ -16,10 +16,6 @@ checks() {
 	if ! which php >/dev/null 2>&1; then
 		fail "Error: php is required"
 	fi
-
-	if ! which jq >/dev/null 2>&1; then
-		fail "Error: jq is required"
-	fi
 }
 
 config_server() {
@@ -95,8 +91,7 @@ add_config_partials() {
 main() {
 	checks
 
-	# Redirecting jq's stderr to drop parser error message that we can test for it
-	local status="$( ooc status --output json 2>/dev/null | jq '.installed' 2>/dev/null )"
+	local status="$( ooc status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
 
 	# Parse validation
 	if [ "${status}" != "true" ] && [ "${status}" != false ]; then
