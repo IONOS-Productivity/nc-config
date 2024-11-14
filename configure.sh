@@ -98,13 +98,12 @@ main() {
 	# Redirecting jq's stderr to drop parser error message that we can test for it
 	local status="$( ooc status --output json 2>/dev/null | jq '.installed' 2>/dev/null )"
 
-	if [ "${status}" = "" ]; then
+	# Parse validation
+	if [ "${status}" != "true" ] && [ "${status}" != false ]; then
 		echo "Error testing Nextcloud status. This is the output of occ status:"
 		ooc status
 		exit 1
-	fi
-
-	if [ "${status}" != "true" ]; then
+	elif [ "${status}" != "true" ]; then
 		echo "Nextcloud is not installed, abort"
 		exit 1
 	fi
