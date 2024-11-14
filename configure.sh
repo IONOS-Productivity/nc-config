@@ -105,7 +105,7 @@ main() {
 	fi
 
 	if [ "${status}" != "true" ]; then
-		echo "NextCloud is not installed, abort"
+		echo "Nextcloud is not installed, abort"
 		exit 1
 	fi
 
