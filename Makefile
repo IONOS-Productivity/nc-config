@@ -29,7 +29,12 @@ build_vue_icons_package: ## Build custom vue icons package
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
 	npm run build
 
-build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package ## Build Nextcloud
+build_nextcloud_vue: ## Build custom nextcloud vue
+	cd custom-npms/nc-nextcloud-vue && \
+	npm ci && \
+	npm run build
+
+build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build Nextcloud
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
