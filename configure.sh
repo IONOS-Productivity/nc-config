@@ -59,6 +59,17 @@ config_apps() {
 	# "see" each other. Users in one contract are part of one group.
 	ooc config:app:set --value="no" core shareapi_only_share_with_group_members
 	ooc config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
+
+	echo "Configure nc_ionos_processes app"
+
+	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
+		echo "Warning: IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app"
+		return
+	fi
+
+	ooc config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
+	ooc config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
+	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --type string nc_ionos_processes basic_auth_pass
 }
 
 add_config_partials() {
