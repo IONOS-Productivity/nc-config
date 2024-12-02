@@ -70,6 +70,14 @@ config_apps() {
 	ooc config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
 	ooc config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
 	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --type string nc_ionos_processes basic_auth_pass
+	
+	echo "Configure files app"
+	ooc config:app:set --value yes files crop_image_previews
+	ooc config:app:set --value yes files show_hidden
+	ooc config:app:set --value yes files sort_favorites_first
+	ooc config:app:set --value yes files sort_folders_first
+	ooc config:app:set --value no files grid_view
+	ooc config:app:set --value no files folder_tree
 }
 
 add_config_partials() {
