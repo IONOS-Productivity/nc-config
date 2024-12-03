@@ -121,8 +121,8 @@ zip_dependencies: ## Zip relevant files
 
 .build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
 
-build_release: .build_deps build_nextcloud add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
+build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
-build_locally: .build_deps  build_nextcloud ## Build all apps/themes for local development
+build_locally: build_nextcloud .build_deps ## Build all apps/themes for local development
 	echo "Everything done for local/dev"
