@@ -26,7 +26,7 @@ build_mdi_js: ## Build custom mdi js
 
 build_vue_icons_package: ## Build custom vue icons package
 	cd custom-npms/nc-vue-material-design-icons && \
-	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
+	npm ci && \
 	npm run build
 
 build_nextcloud_vue: ## Build custom nextcloud vue
