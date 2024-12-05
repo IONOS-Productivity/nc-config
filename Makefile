@@ -14,6 +14,9 @@ help: ## This help.
 # thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .DEFAULT_GOAL := help
 
+.remove_node_modules: ## Remove node_modules
+	rm -rf node_modules
+
 build_mdi_svg: ## Build custom mdi svg
 	cd custom-npms/nc-mdi-svg && \
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
@@ -124,5 +127,5 @@ zip_dependencies: ## Zip relevant files
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
-build_locally: build_nextcloud .build_deps ## Build all apps/themes for local development
+build_locally: .remove_node_modules build_nextcloud .build_deps ## Build all apps/themes for local development
 	echo "Everything done for local/dev"
