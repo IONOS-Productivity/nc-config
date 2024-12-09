@@ -47,6 +47,10 @@ build_dep_simplesettings_app: ## Install and build simplesettings app
 	npm ci && \
 	npm run build
 
+build_dep_nc_ionos_processes_app: ## Install nc_ionos_processes app
+	cd apps-custom/nc_ionos_processes && \
+	composer install --no-dev -o
+
 build_dep_user_oidc_app: ## Install and build user_oidc app
 	cd apps-external/user_oidc && \
 	composer install --no-dev -o && \
@@ -122,7 +126,7 @@ zip_dependencies: ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-.build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
+.build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
