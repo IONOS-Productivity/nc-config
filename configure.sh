@@ -47,7 +47,7 @@ configure_app_nc_ionos_processes() {
 
 	ooc config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
 	ooc config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
-	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --type string nc_ionos_processes basic_auth_pass
+	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
 config_apps() {
