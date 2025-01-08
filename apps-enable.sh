@@ -17,6 +17,19 @@ fail() {
 	exit 1
 }
 
+enable_app() {
+	# Enable app and check if it was enabled
+	# Fail if enabling the app failed
+	#
+	app_name="${1}"
+	echo "Enable app '${app_name}' ..."
+
+		if ! ooc app:enable "${app_name}"
+		then
+			fail "Enabling app \"${app_name}\" failed."
+		fi
+}
+
 enable_apps() {
 	# Enable app in given directory
 	#
@@ -30,12 +43,7 @@ enable_apps() {
 
 	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d | sort); do
 		app_name="$( basename "${app}" )"
-		echo "Enable app '${app_name}' ..."
-
-		if ! ooc app:enable "${app_name}"
-		then
-			fail "Enabling app \"${app_name}\" failed."
-		fi
+		enable_app "${app_name}"
 	done
 }
 
