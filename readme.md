@@ -1,4 +1,4 @@
-# IONOS EasyStorage configuration
+# HiDrive Next configuration
 
 ## Building apps and themes for local development
 
@@ -11,4 +11,3 @@ make -f IONOS/Makefile build_locally
 ```bash
 make -f IONOS/Makefile build_release
 ```
-
