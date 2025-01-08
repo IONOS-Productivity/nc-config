@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Kai Henseler <kai.henseler@strato.de>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-TARGET_PACKAGE_NAME=easy-storage.zip
+TARGET_PACKAGE_NAME=hidrive-next.zip
 
 .PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_dep_user_oidc_app zip_dependencies
 
@@ -75,7 +75,7 @@ build_dep_theming_app: ## Build the custom css
 add_config_partials: ## Copy custom config files to Nextcloud config
 	cp IONOS/configs/*.config.php config/
 
-zip_dependencies: ## Zip relevant files
+zip_dependencies: ## Zip relevant files. Pass TARGET_PACKAGE_NAME (default is hidrive-next.zip) to set the name of the zip file.
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef '{buildDate: $$buildDate, buildRef: $$buildRef}' > version.json && \
