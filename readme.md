@@ -1,4 +1,4 @@
-# IONOS EasyStorage configuration
+# IONOS HiDrive Next configuration
 
 ## Building apps and themes for local development
 
