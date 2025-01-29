@@ -36,17 +36,25 @@ enable_apps() {
 	# Enable app in given directory
 	#
 	apps_dir="${1}"
+	_enabled_apps_count=0
 
 	if [ ! -d "${apps_dir}" ]; then
 		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
 	fi
 
-	echo "Enable apps in folder ${apps_dir} ..."
+	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 
 	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d | sort); do
 		app_name="$( basename "${app}" )"
+		printf "Checking app: %s" "${app_name}"
 
-		enable_app "${app_name}"
+		if echo "${_enabled_apps}" | grep -q -w ${app_name}; then
+			echo " - already enabled - skipping"
+		else
+			echo " - currently disabled - enabling"
+			enable_app "${app_name}"
+			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+		fi
 	done
 }
 
