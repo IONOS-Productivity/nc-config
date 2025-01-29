@@ -7,6 +7,8 @@ BDIR="$( dirname "${0}" )"
 
 NEXTCLOUD_DIR="${BDIR}/.."
 
+. ${BDIR}/enabled-core-apps.inc.sh
+
 ooc() {
 	php "${NEXTCLOUD_DIR}/occ" \
 		"${@}"
@@ -48,12 +50,45 @@ enable_apps() {
 	done
 }
 
+enable_core_apps() {
+	# Enable required core apps if they are presently disabled
+	#
+	_enabled_apps_count=0
+
+	echo "Check required core apps are enabled..."
+
+	disabled_apps=$(./occ app:list --disabled --output json | jq -j '.disabled | keys | join("\n")')
+
+	if [ -z "${disabled_apps}" ]; then
+		echo "No disabled apps found."
+		exit 0
+	fi
+
+	for app in ${ENABLED_CORE_APPS}; do
+		echo "Checking core app: ${app}"
+		if echo "${disabled_apps}" | grep -q -w ${app}; then
+			echo " - currently disabled - enabling"
+			enable_app "${app}"
+			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+		fi
+	done
+
+	echo "Enabled ${_enabled_apps_count} core apps."
+	echo "Done."
+}
+
 main() {
+	if ! jq --version 2>&1 >/dev/null; then
+		fail "Error: jq is required"
+	fi
+
 	echo "Enable all apps in 'apps-external' folder"
 	enable_apps "${NEXTCLOUD_DIR}/apps-external"
 
 	echo "Enable all apps in 'apps-custom' folder"
 	enable_apps "${NEXTCLOUD_DIR}/apps-custom"
+
+	enable_core_apps
 }
 
 main
