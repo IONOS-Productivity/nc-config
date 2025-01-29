@@ -49,7 +49,10 @@ enable_apps() {
 }
 
 main() {
+	echo "Enable all apps in 'apps-external' folder"
 	enable_apps "${NEXTCLOUD_DIR}/apps-external"
+
+	echo "Enable all apps in 'apps-custom' folder"
 	enable_apps "${NEXTCLOUD_DIR}/apps-custom"
 }
 
