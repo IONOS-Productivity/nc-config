@@ -1,0 +1,4 @@
+<?php
+$CONFIG = [
+	'appstoreenabled' => false,
+];
