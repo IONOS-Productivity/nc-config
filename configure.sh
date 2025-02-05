@@ -1,6 +1,8 @@
 #!/bin/sh
 
 BDIR="$( dirname "${0}" )"
+ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
 ooc() {
 	php occ \
@@ -22,7 +24,7 @@ config_server() {
 	echo "Configure NextCloud basics"
 
 	ooc config:system:set lookup_server --value=""
-	ooc user:setting admin settings email admin@example.net
+	ooc user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
 	# array of providers to be used for unified search
 	ooc config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
