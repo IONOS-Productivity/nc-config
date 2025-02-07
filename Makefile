@@ -119,6 +119,7 @@ zip_dependencies: ## Zip relevant files
 	-x "apps-*/*/.github" \
 	-x "apps-*/*/src**" \
 	-x "apps-*/*/node_modules**" \
+	-x "apps-*/*/vendor-bin**" \
 	-x "apps-*/*/tests**" \
 	-x "**/cypress/**" \
 	-x "*.git*" \
