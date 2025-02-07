@@ -1,6 +1,7 @@
 #!/bin/sh
 
 BDIR="$( dirname "${0}" )"
+ABSOLUTE_BDIR="$(cd $(dirname $BDIR); pwd)/$(basename $BDIR)"
 ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
@@ -35,6 +36,7 @@ config_ui() {
 	ooc theming:config name "HiDrive Next"
 	ooc theming:config primary_color "#003D8F"
 	ooc theming:config disable-user-theming yes
+	ooc theming:config favicon $ABSOLUTE_BDIR/favicon.ico
 	ooc config:app:set theming backgroundMime --value backgroundColor
 	ooc config:system:set defaultapp --value files
 }
