@@ -9,4 +9,5 @@ $CONFIG = [
   'ionos_customclient_android' => 'https://wl.hidrive.com/easy/0022',
   'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/0021',
   'ionos_customclient_ios_appid' => '1439073561',
+  'ionos_homepage' => 'https://ionos.fr/',
 ];
