@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=easy-storage.zip
 
-.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_dep_user_oidc_app zip_dependencies
+.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_dep_user_oidc_app zip_dependencies version.json
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -75,12 +75,14 @@ build_dep_theming_app: ## Build the custom css
 add_config_partials: ## Copy custom config files to Nextcloud config
 	cp IONOS/configs/*.config.php config/
 
-zip_dependencies: ## Zip relevant files
+version.json: ## Generate version file
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef '{buildDate: $$buildDate, buildRef: $$buildRef}' > version.json && \
 	echo "version.json created" && \
-	jq . version.json && \
+	jq . version.json
+
+zip_dependencies: version.json ## Zip relevant files
 	echo "zip relevant files to $(TARGET_PACKAGE_NAME)" && \
 	zip -r "$(TARGET_PACKAGE_NAME)" \
 		IONOS/ \
