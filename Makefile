@@ -78,7 +78,8 @@ add_config_partials: ## Copy custom config files to Nextcloud config
 version.json: ## Generate version file
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
-	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef '{buildDate: $$buildDate, buildRef: $$buildRef}' > version.json && \
+	ncVersion=$$(php -r 'include("version.php");echo implode(".", $$OC_Version);') && \
+	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef  --arg ncVersion $$ncVersion '{buildDate: $$buildDate, buildRef: $$buildRef, ncVersion: $$ncVersion}' > version.json && \
 	echo "version.json created" && \
 	jq . version.json
 
