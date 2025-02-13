@@ -12,5 +12,6 @@ $CONFIG = [
 	// Update *existing information* in Nextcloud backend
 	// (false = fail login if existing in other backend)
 	'soft_auto_provision' => false,
+	'allow_multiple_user_backends' => false,
   ],
 ];
