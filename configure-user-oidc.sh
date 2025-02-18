@@ -11,7 +11,7 @@ configure_user_oidc() {
 	# which leads to the user_oidc not being used during runtime.
 	#
 	# https://github.com/nextcloud/user_oidc/blob/v5.0.3/lib/Service/LocalIdService.php#L30
-	./occ user_oidc:provider "${ENC_OIDC_CLIENT_ID}" \
+	./occ user_oidc:provider "${ENC_OIDC_PROVIDER_IDENTIFIER}}" \
 		--clientid="${ENC_OIDC_CLIENT_ID}" \
 		--clientsecret="${ENC_OIDC_SECRET}" \
 		--discoveryuri="${ENC_OIDC_DISCOVERY_URI}" \
@@ -42,6 +42,10 @@ main() {
 		fail "jq not found"
 	fi
 
+	if [ -z "${ENC_OIDC_PROVIDER_IDENTIFIER}" ]; then
+		fail "ENC_OIDC_PROVIDER_IDENTIFIER not set"
+	fi
+
 	if [ -z "${ENC_OIDC_CLIENT_ID}" ]; then
 		fail "ENC_OIDC_CLIENT_ID not set"
 	fi
@@ -58,24 +62,17 @@ main() {
 		fail "ENC_OIDC_SCOPES not set"
 	fi
 
-	provider_id="$( ./occ user_oidc:provider --output=json | jq --arg "clientId" "${ENC_OIDC_CLIENT_ID}" 'map( select(.clientId == $clientId) )[0].id' 2>/dev/null )"
-
-	if [ "${provider_id}" != "null" ]; then
-		echo "Provider already exists for client ID \"${ENC_OIDC_CLIENT_ID}\". Provider ID: ${provider_id}"
-		exit 0
-	fi
-
 	if ! configure_user_oidc; then
-		fail "Error creating provider with client ID \"${ENC_OIDC_CLIENT_ID}\" (occ failed)"
+		fail "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" (occ failed)"
 	fi
 
-	provider_id="$( ./occ user_oidc:provider --output=json | jq --arg "clientId" "${ENC_OIDC_CLIENT_ID}" 'map( select(.clientId == $clientId) )[0].id' 2>/dev/null )"
+	provider_id="$( ./occ user_oidc:provider ${ENC_OIDC_PROVIDER_IDENTIFIER} --output=json | jq --arg "clientId" "${ENC_OIDC_CLIENT_ID}" 'map( select(.clientId == $clientId) )[0].id' 2>/dev/null )"
 
 	if [ "${provider_id}" = "null" ]; then
-		fail "Error creating provider with client ID \"${ENC_OIDC_CLIENT_ID}\": not found"
+		fail "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\": not found"
 	fi
 
-	echo "Provider with client ID \"${ENC_OIDC_CLIENT_ID}\" created. Provider ID: ${provider_id}"
+	echo "Provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" created. Provider ID: ${provider_id}"
 }
 
 main "${@}"
