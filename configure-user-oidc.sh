@@ -11,7 +11,7 @@ configure_user_oidc() {
 	# which leads to the user_oidc not being used during runtime.
 	#
 	# https://github.com/nextcloud/user_oidc/blob/v5.0.3/lib/Service/LocalIdService.php#L30
-	./occ user_oidc:provider "${ENC_OIDC_PROVIDER_IDENTIFIER}}" \
+	./occ user_oidc:provider "${ENC_OIDC_PROVIDER_IDENTIFIER}" \
 		--clientid="${ENC_OIDC_CLIENT_ID}" \
 		--clientsecret="${ENC_OIDC_SECRET}" \
 		--discoveryuri="${ENC_OIDC_DISCOVERY_URI}" \
