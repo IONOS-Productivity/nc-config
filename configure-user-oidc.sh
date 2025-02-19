@@ -16,6 +16,7 @@ configure_user_oidc() {
 		--clientsecret="${ENC_OIDC_SECRET}" \
 		--discoveryuri="${ENC_OIDC_DISCOVERY_URI}" \
 		--endsessionendpointuri="${HDN_OIDC_ENDSESSIONENDPOINT_URI}" \
+		--mapping-uid="${ENC_OIDC_MAPPING_UID}" \
 		--unique-uid=0 \
 		--scope="${ENC_OIDC_SCOPES}"
 
@@ -61,6 +62,10 @@ main() {
 
 	if [ -z "${HDN_OIDC_ENDSESSIONENDPOINT_URI}" ]; then
 		fail "HDN_OIDC_ENDSESSIONENDPOINT_URI not set"
+	fi
+
+	if [ -z "${ENC_OIDC_MAPPING_UID}" ]; then
+		fail "ENC_OIDC_MAPPING_UID not set"
 	fi
 
 	if [ -z "${ENC_OIDC_SCOPES}" ]; then
