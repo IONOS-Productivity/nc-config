@@ -81,9 +81,9 @@ main() {
 		fail "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" (occ failed)"
 	fi
 
-	provider_id="$( ./occ user_oidc:provider ${ENC_OIDC_PROVIDER_IDENTIFIER} --output=json | jq --arg "clientId" "${ENC_OIDC_CLIENT_ID}" 'map( select(.clientId == $clientId) )[0].id' 2>/dev/null )"
+	provider_id=$( ./occ user_oidc:provider "${ENC_OIDC_PROVIDER_IDENTIFIER}" --output=json | jq --arg "clientId" "${ENC_OIDC_CLIENT_ID}" 'select(.clientId == $clientId).id' 2>/dev/null )
 
-	if [ "${provider_id}" = "null" ]; then
+	if [ -z "${provider_id}" ]; then
 		fail "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\": not found"
 	fi
 
