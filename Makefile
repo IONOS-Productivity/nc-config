@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 TARGET_PACKAGE_NAME=easy-storage.zip
+TARGET_TAR_PACKAGE_NAME=hidrive-next.tar.gz
 
-.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_dep_user_oidc_app zip_dependencies version.json
+.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_dep_user_oidc_app zip_dependencies version.json archive_artifact
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -130,9 +131,60 @@ zip_dependencies: version.json ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
+archive_artifact: version.json ## Archive build artifact
+	echo "Archive relevant files to $(TARGET_TAR_PACKAGE_NAME)" && \
+	tar --create --gzip --verbose --file "$(TARGET_TAR_PACKAGE_NAME)" \
+		--exclude="./apps/theming/img/background/**" \
+		--exclude=".git" \
+		--exclude=".github" \
+		--exclude=".gitignore" \
+		--exclude=".gitkeep" \
+		--exclude="./apps-*/*/src**" \
+		--exclude="node_modules" \
+		--exclude="vendor-bin**" \
+		--exclude="tests" \
+		--exclude="cypress" \
+		--exclude=".cache" \
+		--exclude=".idea" \
+		--exclude=".vscode" \
+		--exclude=".editorconfig" \
+		--exclude=".patches" \
+		--exclude="composer.json" \
+		--exclude="composer.lock" \
+		--exclude="package.json" \
+		--exclude="package-lock.json" \
+		--exclude="./themes/nc-ionos-theme/README.md" \
+		--exclude="./themes/nc-ionos-theme/IONOS**" \
+		IONOS/ \
+		3rdparty/ \
+		apps/ \
+		apps-custom/ \
+		apps-external/ \
+		config/ \
+		core/ \
+		dist/ \
+		lib/ \
+		ocs/ \
+		ocs-provider/ \
+		resources/ \
+		themes/ \
+		AUTHORS \
+		console.php \
+		COPYING \
+		cron.php \
+		index.html \
+		index.php \
+		occ \
+		public.php \
+		remote.php \
+		robots.txt \
+		status.php \
+		version.php \
+		version.json
+
 .build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
 
-build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
+build_release: build_nextcloud .build_deps add_config_partials zip_dependencies archive_artifact ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
 build_locally: .remove_node_modules build_nextcloud .build_deps ## Build all apps/themes for local development
