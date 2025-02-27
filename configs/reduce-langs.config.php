@@ -2,7 +2,7 @@
 $CONFIG = [
   'reduce_to_languages' => [
     'en',
-    'de',
+    'de_DE',
     'es',
     'fr',
     'it',
