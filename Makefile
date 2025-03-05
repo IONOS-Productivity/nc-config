@@ -122,6 +122,7 @@ zip_dependencies: version.json ## Zip relevant files
 		status.php \
 		version.php \
 		version.json  \
+		.htaccess \
 	-x "apps/theming/img/background/**" \
 	-x "apps/*/tests/**" \
 	-x "apps-*/*/.git" \
