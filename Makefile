@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=easy-storage.zip
 
-.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_dep_user_oidc_app zip_dependencies version.json
+.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_richdocuments_app build_dep_user_oidc_app zip_dependencies version.json
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -59,6 +59,12 @@ build_dep_user_oidc_app: ## Install and build user_oidc app
 
 build_dep_viewer_app: ## Install and build viewer app
 	cd apps-external/viewer && \
+	composer install --no-dev -o && \
+	npm ci && \
+	npm run build
+
+build_richdocuments_app: ## Install and build richdocuments viewer app
+	cd apps-external/richdocuments && \
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
@@ -130,7 +136,7 @@ zip_dependencies: version.json ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-.build_deps: build_dep_viewer_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
+.build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
