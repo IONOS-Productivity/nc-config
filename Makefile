@@ -129,6 +129,7 @@ zip_dependencies: version.json ## Zip relevant files
 	-x "apps-*/*/composer.json" \
 	-x "apps-*/*/composer.lock" \
 	-x "apps-*/*/composer.phar" \
+	-x "apps-*/*/.tx" \
 	-x "apps-*/*/.github" \
 	-x "apps-*/*/src**" \
 	-x "apps-*/*/node_modules**" \
@@ -137,6 +138,7 @@ zip_dependencies: version.json ## Zip relevant files
 	-x "**/cypress/**" \
 	-x "*.git*" \
 	-x "*.editorconfig*" \
+	-x ".tx" \
 	-x "composer.json" \
 	-x "composer.lock" \
 	-x "composer.phar" \
