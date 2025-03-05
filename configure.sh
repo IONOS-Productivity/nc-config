@@ -42,7 +42,6 @@ config_ui() {
 	ooc theming:config disable-user-theming yes
 	ooc theming:config favicon "${FAVICON_DIR}/favicon.ico"
 	ooc config:app:set theming backgroundMime --value backgroundColor
-	ooc config:system:set defaultapp --value files
 
 	IONOS_HOMEPAGE=$(ooc config:system:get ionos_homepage)
 	if [ -n "${IONOS_HOMEPAGE}" ]; then
