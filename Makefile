@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Kai Henseler <kai.henseler@strato.de>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-TARGET_PACKAGE_NAME=easy-storage.zip
+TARGET_PACKAGE_NAME=hidrivenext-server.zip
 
 .PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_richdocuments_app build_dep_user_oidc_app zip_dependencies version.json
 
