@@ -126,6 +126,9 @@ zip_dependencies: version.json ## Zip relevant files
 	-x "apps/theming/img/background/**" \
 	-x "apps/*/tests/**" \
 	-x "apps-*/*/.git" \
+	-x "apps-*/*/composer.json" \
+	-x "apps-*/*/composer.lock" \
+	-x "apps-*/*/composer.phar" \
 	-x "apps-*/*/.github" \
 	-x "apps-*/*/src**" \
 	-x "apps-*/*/node_modules**" \
@@ -134,6 +137,9 @@ zip_dependencies: version.json ## Zip relevant files
 	-x "**/cypress/**" \
 	-x "*.git*" \
 	-x "*.editorconfig*" \
+	-x "composer.json" \
+	-x "composer.lock" \
+	-x "composer.phar" \
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
