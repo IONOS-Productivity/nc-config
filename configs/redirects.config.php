@@ -8,6 +8,7 @@ $CONFIG = [
     // - A handler would be a method in FooController that was annotated with
     //   - either #[FrontpageRoute] attribute
     //   - or configured in routes.php
-    '^\/settings(\/.*)?' => 'simplesettings.page.index'
+    '^\/settings(\/.*)?' => 'simplesettings.page.index',
+    '^\/u\/[a-zA-Z0-9]+' => 'apps/files'
   ],
 ];
