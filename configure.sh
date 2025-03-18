@@ -94,6 +94,11 @@ config_apps() {
 	ooc config:app:set --value yes files sort_folders_first
 	ooc config:app:set --value no files grid_view
 	ooc config:app:set --value no files folder_tree
+
+	if [ -n "${ENC_OIDC_EXTRA_CLAIMS_AVAILABLE_PRODUCTS}" ]; then
+		echo "Configure user_oid available_products claim"
+		ooc config:system:set user_oidc.claims.available_products --value "${ENC_OIDC_EXTRA_CLAIMS_AVAILABLE_PRODUCTS}"
+	fi
 }
 
 add_config_partials() {
