@@ -94,6 +94,9 @@ config_apps() {
 	ooc config:app:set --value yes files sort_folders_first
 	ooc config:app:set --value no files grid_view
 	ooc config:app:set --value no files folder_tree
+
+	echo "Disable apps"
+	ooc app:disable richdocuments
 }
 
 add_config_partials() {
