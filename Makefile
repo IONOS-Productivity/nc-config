@@ -117,8 +117,6 @@ zip_dependencies: patch_shippend_json version.json ## Zip relevant files
 		index.html \
 		index.php \
 		occ \
-		package.json \
-		package-lock.json \
 		public.php \
 		remote.php \
 		robots.txt \
@@ -145,6 +143,8 @@ zip_dependencies: patch_shippend_json version.json ## Zip relevant files
 	-x "composer.json" \
 	-x "composer.lock" \
 	-x "composer.phar" \
+	-x "package.json" \
+	-x "package-lock.json" \
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
