@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=hidrivenext-server.zip
 
-.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_richdocuments_app build_dep_user_oidc_app zip_dependencies version.json
+.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_richdocuments_app build_dep_user_oidc_app zip_dependencies patch_shippend_json version.json
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -81,6 +81,9 @@ build_dep_theming_app: ## Build the custom css
 add_config_partials: ## Copy custom config files to Nextcloud config
 	cp IONOS/configs/*.config.php config/
 
+patch_shippend_json: ## Patch shipped.json to make core apps disableable
+	IONOS/apps-disable.sh
+
 version.json: ## Generate version file
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
@@ -89,7 +92,7 @@ version.json: ## Generate version file
 	echo "version.json created" && \
 	jq . version.json
 
-zip_dependencies: version.json ## Zip relevant files
+zip_dependencies: patch_shippend_json version.json ## Zip relevant files
 	echo "zip relevant files to $(TARGET_PACKAGE_NAME)" && \
 	zip -r "$(TARGET_PACKAGE_NAME)" \
 		IONOS/ \
