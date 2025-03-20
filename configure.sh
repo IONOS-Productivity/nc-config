@@ -94,8 +94,11 @@ config_apps() {
 	ooc config:app:set --value yes files sort_folders_first
 	ooc config:app:set --value no files grid_view
 	ooc config:app:set --value no files folder_tree
+}
 
+disable_apps() {
 	echo "Disable apps"
+	# temporarily disable richdocuments app without removing it from codebase
 	ooc app:disable richdocuments
 }
 
@@ -145,6 +148,7 @@ main() {
 	config_server
 	config_apps
 	config_ui
+	disable_apps
 }
 
 main "${@}"
