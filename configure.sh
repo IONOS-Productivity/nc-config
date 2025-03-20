@@ -6,6 +6,8 @@ FAVICON_DIR=$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)
 ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
+. ${BDIR}/disabled-apps.inc.sh
+
 ooc() {
 	php occ \
 		"${@}"
@@ -96,10 +98,37 @@ config_apps() {
 	ooc config:app:set --value no files folder_tree
 }
 
+disable_app() {
+	# Disable app and check if it was disabled
+	# Fail if disabling the app failed
+	#
+	app_name="${1}"
+	echo "Disable app '${app_name}' ..."
+
+		if ! ooc app:disable "${app_name}"
+		then
+			fail "Disable app \"${app_name}\" failed."
+		fi
+}
+
 disable_apps() {
 	echo "Disable apps"
-	# temporarily disable richdocuments app without removing it from codebase
-	ooc app:disable richdocuments
+
+	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
+	_disabled_apps_count=0
+
+	for app_name in ${DISABLED_APPS}; do
+		printf "Checking app: %s" "${app_name}"
+		if echo "${_enabled_apps}" | grep -q -w "${app_name}"; then
+			echo " - currently enabled - disabling"
+			disable_app "${app_name}"
+			_disabled_apps_count=$(( _disabled_apps_count + 1 ))
+		else
+			echo " - not enabled - skip"
+		fi
+	done
+
+	echo "Disabled ${_disabled_apps_count} apps."
 }
 
 add_config_partials() {
