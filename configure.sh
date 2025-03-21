@@ -85,6 +85,7 @@ config_apps() {
 	# Share panel to list only users with the same group. Groups should not
 	# "see" each other. Users in one contract are part of one group.
 	ooc config:app:set --value="yes" core shareapi_only_share_with_group_members
+	ooc config:app:set --value="no" core shareapi_allow_group_sharing
 	ooc config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
 	configure_app_nc_ionos_processes
