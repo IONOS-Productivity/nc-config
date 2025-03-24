@@ -174,14 +174,14 @@ add_config_partials() {
 main() {
 	checks
 
-	local status="$( ooc status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
+	_main_status="$( ooc status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
 
 	# Parse validation
-	if [ "${status}" != "true" ] && [ "${status}" != false ]; then
-		echo "Error testing Nextcloud status. This is the output of occ status:"
+	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
+		echo "Error testing Nextcloud install status. This is the output of occ status:"
 		ooc status
 		exit 1
-	elif [ "${status}" != "true" ]; then
+	elif [ "${_main_status}" != "true" ]; then
 		echo "Nextcloud is not installed, abort"
 		exit 1
 	fi
