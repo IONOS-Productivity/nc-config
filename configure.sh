@@ -64,6 +64,17 @@ configure_app_nc_ionos_processes() {
 	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
+configure_app_serverinfo() {
+	echo "Configure serverinfo app"
+
+	if [ -z "${NC_APP_SERVERINFO_TOKEN}" ]; then
+		echo "\033[1;33mWarning: NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app\033[0m"
+		return
+	fi
+
+	ooc config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
+}
+
 config_apps() {
 	echo "Configure apps ..."
 
@@ -89,6 +100,7 @@ config_apps() {
 	ooc config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
 	configure_app_nc_ionos_processes
+	configure_app_serverinfo
 
 	echo "Configure files app"
 	ooc config:app:set --value yes files crop_image_previews
