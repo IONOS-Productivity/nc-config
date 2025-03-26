@@ -13,7 +13,6 @@ privacy
 richdocuments
 recommendations
 related_resources
-serverinfo
 support
 survey_client
 systemtags
