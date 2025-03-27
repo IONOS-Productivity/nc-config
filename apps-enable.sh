@@ -77,7 +77,7 @@ enable_core_apps() {
 	fi
 
 	for app in ${ENABLED_CORE_APPS}; do
-		echo "Checking core app: ${app}"
+		printf "Checking core app: %s" "${app}"
 		if echo "${disabled_apps}" | grep -q -w ${app}; then
 			echo " - currently disabled - enabling"
 			enable_app "${app}"
@@ -85,6 +85,7 @@ enable_core_apps() {
 		fi
 	done
 
+	echo
 	echo "Enabled ${_enabled_apps_count} core apps."
 	echo "Done."
 }
@@ -100,6 +101,7 @@ main() {
 	echo "Enable all apps in 'apps-custom' folder"
 	enable_apps "${NEXTCLOUD_DIR}/apps-custom"
 
+	echo "Enable all apps in 'apps' folder"
 	enable_core_apps
 }
 
