@@ -56,6 +56,10 @@ enable_apps() {
 			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
 		fi
 	done
+
+	echo
+	echo "Enabled ${_enabled_apps_count} apps in ${apps_dir}"
+	echo
 }
 
 enable_core_apps() {
