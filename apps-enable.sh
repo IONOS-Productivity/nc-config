@@ -82,6 +82,8 @@ enable_core_apps() {
 			echo " - currently disabled - enabling"
 			enable_app "${app}"
 			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+		else
+			echo " - already enabled - skip"
 		fi
 	done
 
