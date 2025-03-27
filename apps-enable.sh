@@ -8,6 +8,7 @@ BDIR="$( dirname "${0}" )"
 NEXTCLOUD_DIR="${BDIR}/.."
 
 . ${BDIR}/enabled-core-apps.inc.sh
+. ${BDIR}/disabled-apps.inc.sh
 
 ooc() {
 	php "${NEXTCLOUD_DIR}/occ" \
@@ -32,11 +33,25 @@ enable_app() {
 		fi
 }
 
+disable_app() {
+	# Disable app and check if it was disabled
+	# Fail if disabling the app failed
+	#
+	app_name="${1}"
+	echo "Disable app '${app_name}' ..."
+
+		if ! ooc app:disable "${app_name}"
+		then
+			fail "Disable app \"${app_name}\" failed."
+		fi
+}
+
 enable_apps() {
 	# Enable app in given directory
 	#
 	apps_dir="${1}"
 	_enabled_apps_count=0
+	_disabled_apps_count=0
 
 	if [ ! -d "${apps_dir}" ]; then
 		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
@@ -49,8 +64,22 @@ enable_apps() {
 		printf "Checking app: %s" "${app_name}"
 
 		if echo "${_enabled_apps}" | grep -q -w ${app_name}; then
+
+			if echo "${DISABLED_APPS}" | grep -q -w ${app_name}; then
+				echo " - currently enabled - disabling due to being in DISABLED_APPS"
+				disable_app "${app_name}"
+				_disabled_apps_count=$(( _disabled_apps_count + 1 ))
+				continue
+			fi
+
 			echo " - already enabled - skipping"
 		else
+
+			if echo "${DISABLED_APPS}" | grep -q -w ${app_name}; then
+				echo " - currently disabled - skipping due to being in DISABLED_APPS"
+				continue
+			fi
+
 			echo " - currently disabled - enabling"
 			enable_app "${app_name}"
 			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
@@ -59,6 +88,7 @@ enable_apps() {
 
 	echo
 	echo "Enabled ${_enabled_apps_count} apps in ${apps_dir}"
+	echo "Disabled ${_disabled_apps_count} apps in ${apps_dir}"
 	echo
 }
 
@@ -79,6 +109,12 @@ enable_core_apps() {
 	for app in ${ENABLED_CORE_APPS}; do
 		printf "Checking core app: %s" "${app}"
 		if echo "${disabled_apps}" | grep -q -w ${app}; then
+
+			if echo "${DISABLED_APPS}" | grep -q -w ${app_name}; then
+				echo " - currently disabled - skipping due to being in DISABLED_APPS"
+				continue
+			fi
+
 			echo " - currently disabled - enabling"
 			enable_app "${app}"
 			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
