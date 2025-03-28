@@ -109,6 +109,9 @@ config_apps() {
 	ooc config:app:set --value yes files sort_folders_first
 	ooc config:app:set --value no files grid_view
 	ooc config:app:set --value no files folder_tree
+
+	echo "Configure DAV"
+	ooc config:app:set dav system_addressbook_exposed --value="no"
 }
 
 disable_app() {
