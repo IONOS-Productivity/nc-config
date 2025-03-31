@@ -14,6 +14,5 @@ settings
 sharebymail
 theming
 twofactor_backupcodes
-user_status
 webhook_listeners
 "
