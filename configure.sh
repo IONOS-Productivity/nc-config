@@ -75,6 +75,34 @@ configure_app_serverinfo() {
 	ooc config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
+configure_app_richdocuments() {
+	ooc app:disable richdocuments
+
+	if ! [ "${COLLABORA_HOST}" ] ; then
+		fail Collabora host is not set
+	fi
+
+	if ! [ "${COLLABORA_EDIT_GROUPS}" ] ; then
+		fail Collabora edit groups are not set
+	fi
+
+	ooc app:enable richdocuments
+	ooc config:app:set richdocuments wopi_url --value="${COLLABORA_HOST}"
+	ooc config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
+	ooc config:app:set richdocuments enabled --value='yes'
+
+	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
+		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
+	else
+		ooc config:app:set richdocuments disable_certificate_verification --value="no"
+	fi
+
+	ooc config:app:set richdocuments edit_groups --value="${COLLABORA_EDIT_GROUPS}"
+	ooc app:enable richdocuments
+
+	ooc richdocuments:activate-config
+}
+
 config_apps() {
 	echo "Configure apps ..."
 
@@ -101,6 +129,7 @@ config_apps() {
 
 	configure_app_nc_ionos_processes
 	configure_app_serverinfo
+	configure_app_richdocuments
 
 	echo "Configure files app"
 	ooc config:app:set --value yes files crop_image_previews

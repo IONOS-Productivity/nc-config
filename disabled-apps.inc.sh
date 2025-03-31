@@ -10,7 +10,6 @@ firstrunwizard
 logreader
 nextcloud_announcements
 privacy
-richdocuments
 recommendations
 related_resources
 support
