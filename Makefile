@@ -48,7 +48,7 @@ build_dep_simplesettings_app: ## Install and build simplesettings app
 	npm run build
 
 build_dep_nc_ionos_processes_app: ## Install nc_ionos_processes app
-	cd apps-custom/nc_ionos_processes && \
+	cd apps-custom/nc-ionos-processes && \
 	composer install --no-dev -o
 
 build_dep_user_oidc_app: ## Install and build user_oidc app
