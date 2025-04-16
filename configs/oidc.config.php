@@ -1,4 +1,5 @@
 <?php
+
 $CONFIG = [
 	'user_oidc' => [
 		'use_pkce' => true,
