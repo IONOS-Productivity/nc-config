@@ -1,14 +1,13 @@
 {
   "name": "ionos-productivity/nc-config",
   "description": "HiDrive Next config partials and configuration scripts",
-  "require": {
-  },
   "scripts": {
     "cs:fix": "./vendor/bin/php-cs-fixer fix",
     "cs:check": "./vendor/bin/php-cs-fixer fix --dry-run --diff",
     "lint": "find . -name \\*.php -print0 | xargs -0 -n1 php -l"
   },
   "require-dev": {
-    "friendsofphp/php-cs-fixer": "^3.75"
+    "friendsofphp/php-cs-fixer": "^3.75",
+    "nextcloud/coding-standard": "^1.3"
   }
 }
