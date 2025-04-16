@@ -1,4 +1,5 @@
 <?php
+
 $CONFIG = [
 	'core.login_flow_v2.allowed_user_agents' => [
 		// Use regex to match the user agent string
