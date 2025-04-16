@@ -1,0 +1,11 @@
+{
+  "name": "ionos-productivity/nc-config",
+  "description": "HiDrive Next config partials and configuration scripts",
+  "require": {
+  },
+  "scripts": {
+    "cs:fix": "php-cs-fixer fix",
+    "cs:check": "php-cs-fixer fix --dry-run --diff",
+    "lint": "find . -name \\*.php -print0 | xargs -0 -n1 php -l"
+  }
+}
