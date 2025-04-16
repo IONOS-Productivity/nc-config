@@ -1,10 +1,12 @@
 <?php
 
 declare(strict_types=1);
+require_once './vendor/autoload.php';
 
 use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
+use Nextcloud\CodingStandard\Config;
 
-$config = new PhpCsFixer\Config();
+$config = new Config();
 $config
 	->setParallelConfig(ParallelConfigFactory::detect())
 	->getFinder()

@@ -72,8 +72,17 @@ jobs:
     if: always()
 
     # This is the summary, we just avoid to rename it so that branch protection rules still match
-    name: php-cs Summary
+    name: PHP CS Summary
 
     steps:
       - name: Summary status
-        run: if ${{ needs.changes.outputs.src != 'false' && needs.lint.result != 'success' }}; then exit 1; fi
+        run: |
+          if [[ "${{ needs.changes.outputs.src }}" == "false" ]]; then
+            echo "No relevant changes detected. Nothing to lint."
+          elif [[ "${{ needs.lint.result }}" != "success" ]]; then
+            echo "Check the logs for details of 'PHP CS fixer lint' job."
+            echo "Linting failed. Please run \`composer run cs:fix\` to fix the issues."
+            exit 1
+          else
+            echo "All checks passed successfully."
+          fi
