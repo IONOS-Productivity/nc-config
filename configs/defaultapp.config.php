@@ -1,4 +1,5 @@
 <?php
+
 $CONFIG = [
 	'defaultapp' => 'files',
 ];
