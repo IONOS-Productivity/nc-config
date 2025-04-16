@@ -1,0 +1,9 @@
+{
+  "name": "ionos-productivity/nc-config",
+  "description": "HiDrive Next config partials and configuration scripts",
+  "require": {
+  },
+  "scripts": {
+    "lint": "find . -name \\*.php -print0 | xargs -0 -n1 php -l"
+  }
+}
