@@ -1,4 +1,5 @@
 <?php
+
 $CONFIG = [
 	'user_oidc' => [
 		'enable_default_claims' => false,
