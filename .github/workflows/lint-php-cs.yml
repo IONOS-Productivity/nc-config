@@ -19,11 +19,9 @@ concurrency:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest-low
-
+    runs-on: self-hosted
     outputs:
       src: ${{ steps.changes.outputs.src}}
-
     steps:
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: changes
@@ -32,17 +30,14 @@ jobs:
           filters: |
             src:
               - '.github/workflows/**'
-              - '3rdparty/**'
-              - '**/lib/**'
-              - '**/tests/**'
-              - '**/vendor-bin/**'
+              - 'configs/**'
               - '.php-cs-fixer.dist.php'
               - 'composer.json'
               - 'composer.lock'
               - '**.php'
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     name: PHP CS fixer lint
 
@@ -57,11 +52,12 @@ jobs:
           extensions: bz2, ctype, curl, dom, fileinfo, gd, iconv, intl, json, libxml, mbstring, openssl, pcntl, posix, session, simplexml, xmlreader, xmlwriter, zip, zlib, sqlite, pdo_sqlite
           coverage: none
           ini-file: development
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
         run: composer i
+
+      -   name: Install PHP CS fixer
+          run: composer require --dev friendsofphp/php-cs-fixer
 
       - name: Lint
         run: composer run cs:check || ( echo 'Please run `composer run cs:fix` to format your code' && exit 1 )
@@ -69,7 +65,7 @@ jobs:
   summary:
     permissions:
       contents: none
-    runs-on: ubuntu-latest-low
+    runs-on: self-hosted
     needs: [changes, lint]
 
     if: always()
