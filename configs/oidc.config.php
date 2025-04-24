@@ -1,6 +1,10 @@
 <?php
 $CONFIG = [
 	'user_oidc' => [
+		'enable_default_claims' => false,
+		// When default claims are disabled, each claim will be asked for
+		// only if there is an attribute explicitely mapped in the OpenId
+		// client settings
 		'use_pkce' => true,
 		// true and true are the defaults
 		// > If the user already exists in another backend, we don't create a
