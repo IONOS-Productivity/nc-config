@@ -35,7 +35,7 @@ main() {
 		cat ${SHIPPED_JSON} \
 			| jq --arg toUnforce "${app}" 'del(.defaultEnabled[] | select(. == $toUnforce))' \
 			| jq --arg toUnforce "${app}" 'del(.alwaysEnabled[] | select(. == $toUnforce))' > ${SHIPPED_JSON}.tmp \
-				&& mv ${SHIPPED_JSON}.tmp ${SHIPPED_JSON}
+				&& mv --force ${SHIPPED_JSON}.tmp ${SHIPPED_JSON}
 	done
 }
 
