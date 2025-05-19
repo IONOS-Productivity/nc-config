@@ -12,3 +12,7 @@
 composer.phar
 composer.lock
 /vendor/
+
+# local development configs
+/configs/localdev.config.php
+/configs/codespace.config.php
