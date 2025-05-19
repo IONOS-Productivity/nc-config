@@ -18,24 +18,36 @@ help: ## This help.
 	rm -rf node_modules
 
 build_mdi_svg: ## Build custom mdi svg
+	start=$$(date +%s); \
 	cd custom-npms/nc-mdi-svg && \
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
-	npm run build
+	npm run build; \
+	end=$$(date +%s); \
+	echo "build_mdi_svg took $$((end-start)) seconds"
 
 build_mdi_js: ## Build custom mdi js
+	start=$$(date +%s); \
 	cd custom-npms/nc-mdi-js && \
 	npm ci && \
-	npm run build
+	npm run build; \
+	end=$$(date +%s); \
+	echo "build_mdi_js took $$((end-start)) seconds"
 
 build_vue_icons_package: ## Build custom vue icons package
+	start=$$(date +%s); \
 	cd custom-npms/nc-vue-material-design-icons && \
 	npm ci && \
-	npm run build
+	npm run build; \
+	end=$$(date +%s); \
+	echo "build_vue_icons_package took $$((end-start)) seconds"
 
 build_nextcloud_vue: ## Build custom nextcloud vue
+	start=$$(date +%s); \
 	cd custom-npms/nc-nextcloud-vue && \
 	npm ci && \
-	npm run build
+	npm run build; \
+	end=$$(date +%s); \
+	echo "build_nextcloud_vue took $$((end-start)) seconds"
 
 build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build Nextcloud
 	composer install --no-dev -o && \
