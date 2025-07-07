@@ -40,7 +40,7 @@ build_nextcloud_vue: ## Build custom nextcloud vue
 build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build Nextcloud
 	composer install --no-dev -o && \
 	npm ci && \
-	npm run build
+	NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 build_dep_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
