@@ -254,7 +254,7 @@ disable_single_app() {
 disable_configured_apps() {
 	log_info "Processing app disabling..."
 
-	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
+	_enabled_apps=$(execute_occ_command app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 	_disabled_apps_count=0
 
 	for app_name in ${DISABLED_APPS}; do
