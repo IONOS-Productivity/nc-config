@@ -257,11 +257,11 @@ disable_configured_apps() {
 	_enabled_apps=$(execute_occ_command app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 	_disabled_apps_count=0
 
-	for app_name in ${DISABLED_APPS}; do
-		printf "Checking app: %s" "${app_name}"
-		if echo "${_enabled_apps}" | grep -q -w "${app_name}"; then
+	for _app_name in ${DISABLED_APPS}; do
+		printf "Checking app: %s" "${_app_name}"
+		if echo "${_enabled_apps}" | grep -q -w "${_app_name}"; then
 			echo " - currently enabled - disabling"
-			disable_single_app "${app_name}"
+			disable_single_app "${_app_name}"
 			_disabled_apps_count=$((_disabled_apps_count + 1))
 		else
 			echo " - not enabled - skip"
