@@ -236,16 +236,16 @@ disable_single_app() {
 	# Disable app and check if it was disabled
 	# Fail if disabling the app failed
 	#
-	app_name="${1}"
-	if [ -z "${app_name}" ]; then
+	_app_name="${1}"
+	if [ -z "${_app_name}" ]; then
 		log_fatal "App name is required for disable_single_app function"
 	fi
 
-	log_info "Disabling app '${app_name}'..."
+	log_info "Disabling app '${_app_name}'..."
 
-	if ! execute_occ_command app:disable "${app_name}"
+	if ! execute_occ_command app:disable "${_app_name}"
 	then
-		log_fatal "Disable app \"${app_name}\" failed."
+		log_fatal "Disable app \"${_app_name}\" failed."
 	fi
 }
 
