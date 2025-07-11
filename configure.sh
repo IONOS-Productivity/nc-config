@@ -57,7 +57,7 @@ fail() {
 # Usage: check_dependencies
 check_dependencies() {
 	if ! which php >/dev/null 2>&1; then
-		fail "Error: php is required"
+		fail "Error: php is required but not found in PATH"
 	fi
 }
 
@@ -68,7 +68,7 @@ check_dependencies() {
 # Configure basic HiDrive Next server settings
 # Usage: configure_server_basics
 configure_server_basics() {
-	echo "Configure NextCloud basics"
+	echo "Configuring HiDrive Next server basics..."
 
 	execute_occ_command config:system:set lookup_server --value=""
 	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
@@ -79,7 +79,7 @@ configure_server_basics() {
 # Configure HiDrive Next theming and branding
 # Usage: configure_theming
 configure_theming() {
-	echo "Configure theming"
+	echo "Configuring HiDrive Next theming..."
 
 	execute_occ_command theming:config name "HiDrive Next"
 	execute_occ_command theming:config slogan "powered by IONOS"
@@ -100,7 +100,7 @@ configure_theming() {
 # Configure IONOS processes app with API credentials
 # Usage: configure_ionos_processes_app
 configure_ionos_processes_app() {
-	echo "Configure nc_ionos_processes app"
+	echo "Configuring nc_ionos_processes app..."
 
 	# Check required environment variables
 	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
@@ -116,7 +116,7 @@ configure_ionos_processes_app() {
 # Configure serverinfo app with authentication token
 # Usage: configure_serverinfo_app
 configure_serverinfo_app() {
-	echo "Configure serverinfo app"
+	echo "Configuring serverinfo app..."
 
 	if [ -z "${NC_APP_SERVERINFO_TOKEN}" ]; then
 		echo "\033[1;33mWarning: NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app\033[0m"
@@ -129,16 +129,17 @@ configure_serverinfo_app() {
 # Configure Collabora/richdocuments integration
 # Usage: configure_collabora_app
 configure_collabora_app() {
+	echo "Configuring Collabora integration..."
 	# Disable app initially
 	execute_occ_command app:disable richdocuments
 
 	# Validate required environment variables
 	if ! [ "${COLLABORA_HOST}" ] ; then
-		fail Collabora host is not set
+		fail "COLLABORA_HOST environment variable is not set"
 	fi
 
 	if ! [ "${COLLABORA_EDIT_GROUPS}" ] ; then
-		fail Collabora edit groups are not set
+		fail "COLLABORA_EDIT_GROUPS environment variable is not set"
 	fi
 
 	# Configure and enable Collabora
@@ -211,7 +212,7 @@ disable_single_app() {
 	# Fail if disabling the app failed
 	#
 	app_name="${1}"
-	echo "Disable app '${app_name}' ..."
+	echo "Disabling app '${app_name}'..."
 
 		if ! execute_occ_command app:disable "${app_name}"
 		then
@@ -222,7 +223,7 @@ disable_single_app() {
 # Disable multiple apps based on the DISABLED_APPS list
 # Usage: disable_configured_apps
 disable_configured_apps() {
-	echo "Disable apps"
+	echo "Processing app disabling..."
 
 	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 	_disabled_apps_count=0
@@ -248,7 +249,7 @@ disable_configured_apps() {
 # Add HiDrive Next configuration partials for app paths
 # Usage: setup_config_partials
 setup_config_partials() {
-	echo "Add config partials ..."
+	echo "Setting up configuration partials..."
 
 	cat >"${BDIR}"/../config/app-paths.config.php <<-'EOF'
 		<?php
@@ -281,6 +282,8 @@ setup_config_partials() {
 # Main function to orchestrate HiDrive Next configuration
 # Usage: main [args...]
 main() {
+	echo "Starting HiDrive Next configuration process..."
+
 	# Perform initial checks
 	check_dependencies
 
@@ -302,6 +305,8 @@ main() {
 	config_apps
 	configure_theming
 	disable_configured_apps
+
+	echo "HiDrive Next configuration completed successfully!"
 }
 
 # Execute main function with all script arguments
