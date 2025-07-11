@@ -43,6 +43,7 @@ config_ui() {
 	ooc theming:config primary_color "#003D8F"
 	ooc theming:config disable-user-theming yes
 	ooc theming:config favicon "${FAVICON_DIR}/favicon.ico"
+	ooc theming:config logo "${FAVICON_DIR}/logo.png"
 	ooc config:app:set theming backgroundMime --value backgroundColor
 
 	IONOS_HOMEPAGE=$(ooc config:system:get ionos_homepage)
