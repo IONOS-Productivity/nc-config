@@ -116,9 +116,9 @@ configure_theming() {
 	execute_occ_command config:app:set theming backgroundMime --value backgroundColor
 
 	# Set homepage URL if configured
-	IONOS_HOMEPAGE=$(execute_occ_command config:system:get ionos_homepage)
-	if [ -n "${IONOS_HOMEPAGE}" ]; then
-		execute_occ_command theming:config url "${IONOS_HOMEPAGE}"
+	_ionos_homepage=$(execute_occ_command config:system:get ionos_homepage)
+	if [ -n "${_ionos_homepage}" ]; then
+		execute_occ_command theming:config url "${_ionos_homepage}"
 	fi
 }
 
