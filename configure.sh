@@ -130,7 +130,7 @@ configure_ionos_processes_app() {
 	# Check required environment variables
 	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
 		log_warning "IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app"
-		return
+		return 0
 	fi
 
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
@@ -145,7 +145,7 @@ configure_serverinfo_app() {
 
 	if [ -z "${NC_APP_SERVERINFO_TOKEN}" ]; then
 		log_warning "NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app"
-		return
+		return 0
 	fi
 
 	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
