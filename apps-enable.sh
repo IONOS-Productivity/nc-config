@@ -16,7 +16,7 @@ ooc() {
 }
 
 fail() {
-	echo "${*}"
+	echo "${*}" >&2
 	exit 1
 }
 
