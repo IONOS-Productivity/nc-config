@@ -28,14 +28,14 @@
 #===============================================================================
 
 # Script configuration and constants
-BDIR="$( dirname "${0}" )"
-NEXTCLOUD_DIR="${BDIR}/.."
+SCRIPT_DIR="$( dirname "${0}" )"
+NEXTCLOUD_DIR="${SCRIPT_DIR}/.."
 FAVICON_DIR=$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)
 ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
 # Load disabled apps configuration
-. ${BDIR}/disabled-apps.inc.sh
+. ${SCRIPT_DIR}/disabled-apps.inc.sh
 
 #===============================================================================
 # Utility Functions
@@ -251,7 +251,7 @@ disable_configured_apps() {
 setup_config_partials() {
 	echo "Setting up configuration partials..."
 
-	cat >"${BDIR}"/../config/app-paths.config.php <<-'EOF'
+	cat >"${SCRIPT_DIR}"/../config/app-paths.config.php <<-'EOF'
 		<?php
 		$CONFIG = [
 		  'apps_paths' => [
