@@ -8,7 +8,13 @@ ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
 . ${BDIR}/disabled-apps.inc.sh
 
-ooc() {
+#===============================================================================
+# Utility Functions
+#===============================================================================
+
+# Execute NextCloud OCC command with error handling
+# Usage: execute_occ_command <command> [args...]
+execute_occ_command() {
 	php occ \
 		"${@}"
 }
@@ -27,27 +33,27 @@ checks() {
 config_server() {
 	echo "Configure NextCloud basics"
 
-	ooc config:system:set lookup_server --value=""
-	ooc user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
+	execute_occ_command config:system:set lookup_server --value=""
+	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
 	# array of providers to be used for unified search
-	ooc config:app:set --value '["files"]' --type array core unified_search.providers_allowed
+	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
 
 config_ui() {
 	echo "Configure theming"
 
-	ooc theming:config name "HiDrive Next"
-	ooc theming:config slogan "powered by IONOS"
-	ooc theming:config imprintUrl " "
-	ooc theming:config privacyUrl " "
-	ooc theming:config primary_color "#003D8F"
-	ooc theming:config disable-user-theming yes
-	ooc theming:config favicon "${FAVICON_DIR}/favicon.ico"
-	ooc config:app:set theming backgroundMime --value backgroundColor
+	execute_occ_command theming:config name "HiDrive Next"
+	execute_occ_command theming:config slogan "powered by IONOS"
+	execute_occ_command theming:config imprintUrl " "
+	execute_occ_command theming:config privacyUrl " "
+	execute_occ_command theming:config primary_color "#003D8F"
+	execute_occ_command theming:config disable-user-theming yes
+	execute_occ_command theming:config favicon "${FAVICON_DIR}/favicon.ico"
+	execute_occ_command config:app:set theming backgroundMime --value backgroundColor
 
-	IONOS_HOMEPAGE=$(ooc config:system:get ionos_homepage)
+	IONOS_HOMEPAGE=$(execute_occ_command config:system:get ionos_homepage)
 	if [ -n "${IONOS_HOMEPAGE}" ]; then
-		ooc theming:config url "${IONOS_HOMEPAGE}"
+		execute_occ_command theming:config url "${IONOS_HOMEPAGE}"
 	fi
 }
 
@@ -59,9 +65,9 @@ configure_app_nc_ionos_processes() {
 		return
 	fi
 
-	ooc config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
-	ooc config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
-	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
+	execute_occ_command config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
+	execute_occ_command config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
+	execute_occ_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
 configure_app_serverinfo() {
@@ -72,11 +78,11 @@ configure_app_serverinfo() {
 		return
 	fi
 
-	ooc config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
+	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
 configure_app_richdocuments() {
-	ooc app:disable richdocuments
+	execute_occ_command app:disable richdocuments
 
 	if ! [ "${COLLABORA_HOST}" ] ; then
 		fail Collabora host is not set
@@ -86,61 +92,61 @@ configure_app_richdocuments() {
 		fail Collabora edit groups are not set
 	fi
 
-	ooc app:enable richdocuments
-	ooc config:app:set richdocuments wopi_url --value="${COLLABORA_HOST}"
-	ooc config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
-	ooc config:app:set richdocuments enabled --value='yes'
+	execute_occ_command app:enable richdocuments
+	execute_occ_command config:app:set richdocuments wopi_url --value="${COLLABORA_HOST}"
+	execute_occ_command config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
+	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
 	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
-		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
+		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
-		ooc config:app:set richdocuments disable_certificate_verification --value="no"
+		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
 	fi
 
-	ooc config:app:set richdocuments edit_groups --value="${COLLABORA_EDIT_GROUPS}"
-	ooc app:enable richdocuments
+	execute_occ_command config:app:set richdocuments edit_groups --value="${COLLABORA_EDIT_GROUPS}"
+	execute_occ_command app:enable richdocuments
 
-	ooc richdocuments:activate-config
+	execute_occ_command richdocuments:activate-config
 }
 
 config_apps() {
 	echo "Configure apps ..."
 
 	echo "Configure viewer app"
-	ooc config:app:set --value yes --type string viewer always_show_viewer
+	execute_occ_command config:app:set --value yes --type string viewer always_show_viewer
 
 	echo "Disable federated sharing"
 	# To disable entering the user@host ID of an external Nextcloud instance
 	# in the (uncustomized) search input field of the share panel
-	ooc config:app:set --value no files_sharing outgoing_server2server_share_enabled
-	ooc config:app:set --value no files_sharing incoming_server2server_share_enabled
-	ooc config:app:set --value no files_sharing outgoing_server2server_group_share_enabled
-	ooc config:app:set --value no files_sharing incoming_server2server_group_share_enabled
-	ooc config:app:set --value no files_sharing lookupServerEnabled
-	ooc config:app:set --value no files_sharing lookupServerUploadEnabled
+	execute_occ_command config:app:set --value no files_sharing outgoing_server2server_share_enabled
+	execute_occ_command config:app:set --value no files_sharing incoming_server2server_share_enabled
+	execute_occ_command config:app:set --value no files_sharing outgoing_server2server_group_share_enabled
+	execute_occ_command config:app:set --value no files_sharing incoming_server2server_group_share_enabled
+	execute_occ_command config:app:set --value no files_sharing lookupServerEnabled
+	execute_occ_command config:app:set --value no files_sharing lookupServerUploadEnabled
 
 	echo "Configure internal share settings"
 	# To limit user and group display in the username search field of the
 	# Share panel to list only users with the same group. Groups should not
 	# "see" each other. Users in one contract are part of one group.
-	ooc config:app:set --value="yes" core shareapi_only_share_with_group_members
-	ooc config:app:set --value="no" core shareapi_allow_group_sharing
-	ooc config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
+	execute_occ_command config:app:set --value="yes" core shareapi_only_share_with_group_members
+	execute_occ_command config:app:set --value="no" core shareapi_allow_group_sharing
+	execute_occ_command config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
 	configure_app_nc_ionos_processes
 	configure_app_serverinfo
 	configure_app_richdocuments
 
 	echo "Configure files app"
-	ooc config:app:set --value yes files crop_image_previews
-	ooc config:app:set --value yes files show_hidden
-	ooc config:app:set --value yes files sort_favorites_first
-	ooc config:app:set --value yes files sort_folders_first
-	ooc config:app:set --value no files grid_view
-	ooc config:app:set --value no files folder_tree
+	execute_occ_command config:app:set --value yes files crop_image_previews
+	execute_occ_command config:app:set --value yes files show_hidden
+	execute_occ_command config:app:set --value yes files sort_favorites_first
+	execute_occ_command config:app:set --value yes files sort_folders_first
+	execute_occ_command config:app:set --value no files grid_view
+	execute_occ_command config:app:set --value no files folder_tree
 
 	echo "Configure DAV"
-	ooc config:app:set dav system_addressbook_exposed --value="no"
+	execute_occ_command config:app:set dav system_addressbook_exposed --value="no"
 }
 
 disable_app() {
@@ -150,7 +156,7 @@ disable_app() {
 	app_name="${1}"
 	echo "Disable app '${app_name}' ..."
 
-		if ! ooc app:disable "${app_name}"
+		if ! execute_occ_command app:disable "${app_name}"
 		then
 			fail "Disable app \"${app_name}\" failed."
 		fi
@@ -206,12 +212,12 @@ add_config_partials() {
 main() {
 	checks
 
-	_main_status="$( ooc status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
+	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
 
 	# Parse validation
 	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
 		echo "Error testing Nextcloud install status. This is the output of occ status:"
-		ooc status
+		execute_occ_command status
 		exit 1
 	elif [ "${_main_status}" != "true" ]; then
 		echo "Nextcloud is not installed, abort"
