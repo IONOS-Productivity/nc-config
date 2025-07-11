@@ -24,13 +24,13 @@ fail() {
 	exit 1
 }
 
-checks() {
+check_dependencies() {
 	if ! which php >/dev/null 2>&1; then
 		fail "Error: php is required"
 	fi
 }
 
-config_server() {
+configure_server_basics() {
 	echo "Configure NextCloud basics"
 
 	execute_occ_command config:system:set lookup_server --value=""
@@ -39,7 +39,7 @@ config_server() {
 	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
 
-config_ui() {
+configure_theming() {
 	echo "Configure theming"
 
 	execute_occ_command theming:config name "HiDrive Next"
@@ -57,7 +57,7 @@ config_ui() {
 	fi
 }
 
-configure_app_nc_ionos_processes() {
+configure_ionos_processes_app() {
 	echo "Configure nc_ionos_processes app"
 
 	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
@@ -70,7 +70,7 @@ configure_app_nc_ionos_processes() {
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
-configure_app_serverinfo() {
+configure_serverinfo_app() {
 	echo "Configure serverinfo app"
 
 	if [ -z "${NC_APP_SERVERINFO_TOKEN}" ]; then
@@ -81,7 +81,7 @@ configure_app_serverinfo() {
 	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
-configure_app_richdocuments() {
+configure_collabora_app() {
 	execute_occ_command app:disable richdocuments
 
 	if ! [ "${COLLABORA_HOST}" ] ; then
@@ -133,9 +133,9 @@ config_apps() {
 	execute_occ_command config:app:set --value="no" core shareapi_allow_group_sharing
 	execute_occ_command config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
-	configure_app_nc_ionos_processes
-	configure_app_serverinfo
-	configure_app_richdocuments
+	configure_ionos_processes_app
+	configure_serverinfo_app
+	configure_collabora_app
 
 	echo "Configure files app"
 	execute_occ_command config:app:set --value yes files crop_image_previews
@@ -149,7 +149,7 @@ config_apps() {
 	execute_occ_command config:app:set dav system_addressbook_exposed --value="no"
 }
 
-disable_app() {
+disable_single_app() {
 	# Disable app and check if it was disabled
 	# Fail if disabling the app failed
 	#
@@ -162,7 +162,7 @@ disable_app() {
 		fi
 }
 
-disable_apps() {
+disable_configured_apps() {
 	echo "Disable apps"
 
 	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
@@ -172,7 +172,7 @@ disable_apps() {
 		printf "Checking app: %s" "${app_name}"
 		if echo "${_enabled_apps}" | grep -q -w "${app_name}"; then
 			echo " - currently enabled - disabling"
-			disable_app "${app_name}"
+			disable_single_app "${app_name}"
 			_disabled_apps_count=$(( _disabled_apps_count + 1 ))
 		else
 			echo " - not enabled - skip"
@@ -182,7 +182,7 @@ disable_apps() {
 	echo "Disabled ${_disabled_apps_count} apps."
 }
 
-add_config_partials() {
+setup_config_partials() {
 	echo "Add config partials ..."
 
 	cat >"${BDIR}"/../config/app-paths.config.php <<-'EOF'
@@ -210,7 +210,7 @@ add_config_partials() {
 }
 
 main() {
-	checks
+	check_dependencies
 
 	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
 
@@ -224,11 +224,11 @@ main() {
 		exit 1
 	fi
 
-	add_config_partials
-	config_server
+	setup_config_partials
+	configure_server_basics
 	config_apps
-	config_ui
-	disable_apps
+	configure_theming
+	disable_configured_apps
 }
 
 main "${@}"
