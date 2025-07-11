@@ -47,20 +47,42 @@ readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 # Execute NextCloud OCC command with error handling
 # Usage: execute_occ_command <command> [args...]
 execute_occ_command() {
-	php occ \
-		"${@}"
+	if ! php occ "${@}"; then
+		log_error "Failed to execute OCC command: ${*}"
+		return 1
+	fi
 }
 
-fail() {
-	echo "${*}"
+# Log error message to stderr
+# Usage: log_error <message>
+log_error() {
+	echo "Error: ${*}" >&2
+}
+
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "Fatal Error: ${*}" >&2
 	exit 1
+}
+
+# Log warning message with yellow color
+# Usage: log_warning <message>
+log_warning() {
+	echo "\033[1;33mWarning: ${*}\033[0m" >&2
+}
+
+# Log info message
+# Usage: log_info <message>
+log_info() {
+	echo "${*}"
 }
 
 # Check if required dependencies are available
 # Usage: check_dependencies
 check_dependencies() {
 	if ! which php >/dev/null 2>&1; then
-		fail "Error: php is required but not found in PATH"
+		log_fatal "php is required but not found in PATH"
 	fi
 }
 
@@ -71,7 +93,7 @@ check_dependencies() {
 # Configure basic HiDrive Next server settings
 # Usage: configure_server_basics
 configure_server_basics() {
-	echo "Configuring HiDrive Next server basics..."
+	log_info "Configuring HiDrive Next server basics..."
 
 	execute_occ_command config:system:set lookup_server --value=""
 	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
@@ -82,7 +104,7 @@ configure_server_basics() {
 # Configure HiDrive Next theming and branding
 # Usage: configure_theming
 configure_theming() {
-	echo "Configuring HiDrive Next theming..."
+	log_info "Configuring HiDrive Next theming..."
 
 	execute_occ_command theming:config name "HiDrive Next"
 	execute_occ_command theming:config slogan "powered by IONOS"
@@ -103,11 +125,11 @@ configure_theming() {
 # Configure IONOS processes app with API credentials
 # Usage: configure_ionos_processes_app
 configure_ionos_processes_app() {
-	echo "Configuring nc_ionos_processes app..."
+	log_info "Configuring nc_ionos_processes app..."
 
 	# Check required environment variables
 	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
-		echo "\033[1;33mWarning: IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app\033[0m"
+		log_warning "IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app"
 		return
 	fi
 
@@ -119,10 +141,10 @@ configure_ionos_processes_app() {
 # Configure serverinfo app with authentication token
 # Usage: configure_serverinfo_app
 configure_serverinfo_app() {
-	echo "Configuring serverinfo app..."
+	log_info "Configuring serverinfo app..."
 
 	if [ -z "${NC_APP_SERVERINFO_TOKEN}" ]; then
-		echo "\033[1;33mWarning: NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app\033[0m"
+		log_warning "NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app"
 		return
 	fi
 
@@ -132,17 +154,17 @@ configure_serverinfo_app() {
 # Configure Collabora/richdocuments integration
 # Usage: configure_collabora_app
 configure_collabora_app() {
-	echo "Configuring Collabora integration..."
+	log_info "Configuring Collabora integration..."
 	# Disable app initially
 	execute_occ_command app:disable richdocuments
 
 	# Validate required environment variables
 	if ! [ "${COLLABORA_HOST}" ]; then
-		fail "COLLABORA_HOST environment variable is not set"
+		log_fatal "COLLABORA_HOST environment variable is not set"
 	fi
 
 	if ! [ "${COLLABORA_EDIT_GROUPS}" ]; then
-		fail "COLLABORA_EDIT_GROUPS environment variable is not set"
+		log_fatal "COLLABORA_EDIT_GROUPS environment variable is not set"
 	fi
 
 	# Configure and enable Collabora
@@ -215,18 +237,18 @@ disable_single_app() {
 	# Fail if disabling the app failed
 	#
 	app_name="${1}"
-	echo "Disabling app '${app_name}'..."
+	log_info "Disabling app '${app_name}'..."
 
 	if ! execute_occ_command app:disable "${app_name}"
 	then
-		fail "Disable app \"${app_name}\" failed."
+		log_fatal "Disable app \"${app_name}\" failed."
 	fi
 }
 
 # Disable multiple apps based on the DISABLED_APPS list
 # Usage: disable_configured_apps
 disable_configured_apps() {
-	echo "Processing app disabling..."
+	log_info "Processing app disabling..."
 
 	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 	_disabled_apps_count=0
@@ -242,7 +264,7 @@ disable_configured_apps() {
 		fi
 	done
 
-	echo "Disabled ${_disabled_apps_count} apps."
+	log_info "Disabled ${_disabled_apps_count} apps."
 }
 
 #===============================================================================
@@ -252,7 +274,7 @@ disable_configured_apps() {
 # Add HiDrive Next configuration partials for app paths
 # Usage: setup_config_partials
 setup_config_partials() {
-	echo "Setting up configuration partials..."
+	log_info "Setting up configuration partials..."
 
 	cat >"${SCRIPT_DIR}/../config/app-paths.config.php" <<-'EOF'
 		<?php
@@ -285,7 +307,7 @@ setup_config_partials() {
 # Main function to orchestrate HiDrive Next configuration
 # Usage: main [args...]
 main() {
-	echo "Starting HiDrive Next configuration process..."
+	log_info "Starting HiDrive Next configuration process..."
 
 	# Perform initial checks
 	check_dependencies
@@ -294,12 +316,11 @@ main() {
 
 	# Parse validation
 	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
-		echo "Error testing Nextcloud install status. This is the output of occ status:"
+		log_info "Error testing Nextcloud install status. This is the output of occ status:"
 		execute_occ_command status
 		exit 1
 	elif [ "${_main_status}" != "true" ]; then
-		echo "Nextcloud is not installed, abort"
-		exit 1
+		log_fatal "Nextcloud is not installed, abort"
 	fi
 
 	# Execute configuration steps
@@ -309,7 +330,7 @@ main() {
 	configure_theming
 	disable_configured_apps
 
-	echo "HiDrive Next configuration completed successfully!"
+	log_info "HiDrive Next configuration completed successfully!"
 }
 
 # Execute main function with all script arguments
