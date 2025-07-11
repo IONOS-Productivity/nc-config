@@ -56,26 +56,26 @@ execute_occ_command() {
 # Log error message to stderr
 # Usage: log_error <message>
 log_error() {
-	echo "Error: ${*}" >&2
+	echo "\033[1;31m[e] Error: ${*}\033[0m" >&2
 }
 
 # Log fatal error message and exit with failure code
 # Usage: log_fatal <message>
 log_fatal() {
-	echo "Fatal Error: ${*}" >&2
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >&2
 	exit 1
 }
 
 # Log warning message with yellow color
 # Usage: log_warning <message>
 log_warning() {
-	echo "\033[1;33mWarning: ${*}\033[0m" >&2
+	echo "\033[1;33m[w] Warning: ${*}\033[0m" >&2
 }
 
 # Log info message
 # Usage: log_info <message>
 log_info() {
-	echo "${*}"
+	echo "[i] ${*}"
 }
 
 # Check if required dependencies are available
