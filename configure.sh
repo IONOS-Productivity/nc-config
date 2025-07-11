@@ -187,12 +187,12 @@ configure_collabora_app() {
 }
 
 config_apps() {
-	echo "Configure apps ..."
+	log_info "Configure apps ..."
 
-	echo "Configure viewer app"
+	log_info "Configure viewer app"
 	execute_occ_command config:app:set --value yes --type string viewer always_show_viewer
 
-	echo "Disable federated sharing"
+	log_info "Disable federated sharing"
 	# To disable entering the user@host ID of an external Nextcloud instance
 	# in the (uncustomized) search input field of the share panel
 	execute_occ_command config:app:set --value no files_sharing outgoing_server2server_share_enabled
@@ -202,7 +202,7 @@ config_apps() {
 	execute_occ_command config:app:set --value no files_sharing lookupServerEnabled
 	execute_occ_command config:app:set --value no files_sharing lookupServerUploadEnabled
 
-	echo "Configure internal share settings"
+	log_info "Configure internal share settings"
 	# To limit user and group display in the username search field of the
 	# Share panel to list only users with the same group. Groups should not
 	# "see" each other. Users in one contract are part of one group.
@@ -214,7 +214,7 @@ config_apps() {
 	configure_serverinfo_app
 	configure_collabora_app
 
-	echo "Configure files app"
+	log_info "Configure files app"
 	execute_occ_command config:app:set --value yes files crop_image_previews
 	execute_occ_command config:app:set --value yes files show_hidden
 	execute_occ_command config:app:set --value yes files sort_favorites_first
@@ -222,7 +222,7 @@ config_apps() {
 	execute_occ_command config:app:set --value no files grid_view
 	execute_occ_command config:app:set --value no files folder_tree
 
-	echo "Configure DAV"
+	log_info "Configure DAV"
 	execute_occ_command config:app:set dav system_addressbook_exposed --value="no"
 }
 
@@ -258,7 +258,7 @@ disable_configured_apps() {
 	_disabled_apps_count=0
 
 	for _app_name in ${DISABLED_APPS}; do
-		printf "Checking app: %s" "${_app_name}"
+		printf "[?] Checking app: %s" "${_app_name}"
 		if echo "${_enabled_apps}" | grep -q -w "${_app_name}"; then
 			echo " - currently enabled - disabling"
 			disable_single_app "${_app_name}"
@@ -334,7 +334,7 @@ main() {
 	configure_theming
 	disable_configured_apps
 
-	log_info "HiDrive Next configuration completed successfully!"
+	echo "\033[1;32m[i] HiDrive Next configuration completed successfully!\033[0m"
 }
 
 # Execute main function with all script arguments
