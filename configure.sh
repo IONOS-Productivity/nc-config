@@ -86,6 +86,22 @@ check_dependencies() {
 	fi
 }
 
+# Verify HiDrive Next installation status
+# Usage: verify_nextcloud_installation
+verify_nextcloud_installation() {
+	log_info "Verifying HiDrive Next installation status..."
+	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
+
+	# Parse validation
+	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
+		log_info "Error testing Nextcloud install status. This is the output of occ status:"
+		execute_occ_command status
+		log_fatal "Nextcloud is not installed, abort"
+	elif [ "${_main_status}" != "true" ]; then
+		log_fatal "Nextcloud is not installed, abort"
+	fi
+}
+
 #===============================================================================
 # Configuration Functions
 #===============================================================================
@@ -315,17 +331,7 @@ main() {
 
 	# Perform initial checks
 	check_dependencies
-
-	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
-
-	# Parse validation
-	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
-		log_info "Error testing Nextcloud install status. This is the output of occ status:"
-		execute_occ_command status
-		exit 1
-	elif [ "${_main_status}" != "true" ]; then
-		log_fatal "Nextcloud is not installed, abort"
-	fi
+	verify_nextcloud_installation
 
 	# Execute configuration steps
 	setup_config_partials
