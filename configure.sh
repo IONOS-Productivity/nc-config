@@ -28,17 +28,17 @@
 #===============================================================================
 
 # Script configuration and constants
-SCRIPT_DIR="$( dirname "${0}" )"
+SCRIPT_DIR="$(dirname "${0}")"
 readonly SCRIPT_DIR
 NEXTCLOUD_DIR="${SCRIPT_DIR}/.."
 readonly NEXTCLOUD_DIR
-FAVICON_DIR=$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)
+FAVICON_DIR="$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)"
 readonly FAVICON_DIR
 readonly ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
 # Load disabled apps configuration
-. ${SCRIPT_DIR}/disabled-apps.inc.sh
+. "${SCRIPT_DIR}/disabled-apps.inc.sh"
 
 #===============================================================================
 # Utility Functions
@@ -137,11 +137,11 @@ configure_collabora_app() {
 	execute_occ_command app:disable richdocuments
 
 	# Validate required environment variables
-	if ! [ "${COLLABORA_HOST}" ] ; then
+	if ! [ "${COLLABORA_HOST}" ]; then
 		fail "COLLABORA_HOST environment variable is not set"
 	fi
 
-	if ! [ "${COLLABORA_EDIT_GROUPS}" ] ; then
+	if ! [ "${COLLABORA_EDIT_GROUPS}" ]; then
 		fail "COLLABORA_EDIT_GROUPS environment variable is not set"
 	fi
 
@@ -152,7 +152,7 @@ configure_collabora_app() {
 	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
 	# Configure SSL certificate verification
-	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
+	if [ "${COLLABORA_SELF_SIGNED}" = "true" ]; then
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
@@ -217,10 +217,10 @@ disable_single_app() {
 	app_name="${1}"
 	echo "Disabling app '${app_name}'..."
 
-		if ! execute_occ_command app:disable "${app_name}"
-		then
-			fail "Disable app \"${app_name}\" failed."
-		fi
+	if ! execute_occ_command app:disable "${app_name}"
+	then
+		fail "Disable app \"${app_name}\" failed."
+	fi
 }
 
 # Disable multiple apps based on the DISABLED_APPS list
@@ -236,7 +236,7 @@ disable_configured_apps() {
 		if echo "${_enabled_apps}" | grep -q -w "${app_name}"; then
 			echo " - currently enabled - disabling"
 			disable_single_app "${app_name}"
-			_disabled_apps_count=$(( _disabled_apps_count + 1 ))
+			_disabled_apps_count=$((_disabled_apps_count + 1))
 		else
 			echo " - not enabled - skip"
 		fi
@@ -254,7 +254,7 @@ disable_configured_apps() {
 setup_config_partials() {
 	echo "Setting up configuration partials..."
 
-	cat >"${SCRIPT_DIR}"/../config/app-paths.config.php <<-'EOF'
+	cat >"${SCRIPT_DIR}/../config/app-paths.config.php" <<-'EOF'
 		<?php
 		$CONFIG = [
 		  'apps_paths' => [
