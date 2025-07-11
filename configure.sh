@@ -29,10 +29,13 @@
 
 # Script configuration and constants
 SCRIPT_DIR="$( dirname "${0}" )"
+readonly SCRIPT_DIR
 NEXTCLOUD_DIR="${SCRIPT_DIR}/.."
+readonly NEXTCLOUD_DIR
 FAVICON_DIR=$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)
-ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
+readonly FAVICON_DIR
+readonly ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
 # Load disabled apps configuration
 . ${SCRIPT_DIR}/disabled-apps.inc.sh
