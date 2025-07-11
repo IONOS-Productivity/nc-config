@@ -22,15 +22,17 @@ fail() {
 
 enable_app() {
 	# Enable app and check if it was enabled
-	# Fail if enabling the app failed
+	# Return 1 if enabling the app failed, 0 if successful
 	#
 	app_name="${1}"
 	echo "Enable app '${app_name}' ..."
 
 		if ! ooc app:enable "${app_name}"
 		then
-			fail "Enabling app \"${app_name}\" failed."
+			echo "ERROR: Enabling app \"${app_name}\" failed."
+			return 1
 		fi
+		return 0
 }
 
 disable_app() {
@@ -52,6 +54,8 @@ enable_apps() {
 	apps_dir="${1}"
 	_enabled_apps_count=0
 	_disabled_apps_count=0
+	_failed_apps_count=0
+	_failed_apps_list=""
 
 	if [ ! -d "${apps_dir}" ]; then
 		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
@@ -81,14 +85,25 @@ enable_apps() {
 			fi
 
 			echo " - currently disabled - enabling"
-			enable_app "${app_name}"
-			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+			if enable_app "${app_name}"; then
+				_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+			else
+				_failed_apps_count=$(( _failed_apps_count + 1 ))
+				if [ -z "${_failed_apps_list}" ]; then
+					_failed_apps_list="${app_name}"
+				else
+					_failed_apps_list="${_failed_apps_list}, ${app_name}"
+				fi
+			fi
 		fi
 	done
 
 	echo
 	echo "Enabled ${_enabled_apps_count} apps in ${apps_dir}"
 	echo "Disabled ${_disabled_apps_count} apps in ${apps_dir}"
+	if [ ${_failed_apps_count} -gt 0 ]; then
+		fail "PANIC: Failed to enable ${_failed_apps_count} apps in ${apps_dir}: ${_failed_apps_list}"
+	fi
 	echo
 }
 
