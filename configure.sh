@@ -1,11 +1,40 @@
 #!/bin/sh
 
+#===============================================================================
+# HiDrive Next Configuration Script
+#===============================================================================
+# This script configures a HiDrive Next instance with IONOS-specific settings.
+#
+# Features:
+# - Server basic configuration (lookup server, admin email, search providers)
+# - Theming and branding setup for IONOS HiDrive Next
+# - App configuration (viewer, sharing, files, DAV)
+# - Integration setup (IONOS processes, serverinfo, Collabora)
+# - Selective app disabling based on configuration
+# - Configuration partials for app paths
+#
+# Environment Variables:
+# - ADMIN_USERNAME: Admin username (default: admin)
+# - ADMIN_EMAIL: Admin email (default: admin@example.net)
+# - IONOS_PROCESSES_API_URL: API URL for IONOS processes
+# - IONOS_PROCESSES_USER: Username for IONOS processes API
+# - IONOS_PROCESSES_PASS: Password for IONOS processes API
+# - NC_APP_SERVERINFO_TOKEN: Token for serverinfo app
+# - COLLABORA_HOST: Collabora server host URL
+# - COLLABORA_EDIT_GROUPS: Groups allowed to edit in Collabora
+# - COLLABORA_SELF_SIGNED: Set to "true" for self-signed certificates
+#
+# Usage: ./configure.sh
+#===============================================================================
+
+# Script configuration and constants
 BDIR="$( dirname "${0}" )"
 NEXTCLOUD_DIR="${BDIR}/.."
 FAVICON_DIR=$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)
 ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
+# Load disabled apps configuration
 . ${BDIR}/disabled-apps.inc.sh
 
 #===============================================================================
@@ -24,12 +53,20 @@ fail() {
 	exit 1
 }
 
+# Check if required dependencies are available
+# Usage: check_dependencies
 check_dependencies() {
 	if ! which php >/dev/null 2>&1; then
 		fail "Error: php is required"
 	fi
 }
 
+#===============================================================================
+# Configuration Functions
+#===============================================================================
+
+# Configure basic HiDrive Next server settings
+# Usage: configure_server_basics
 configure_server_basics() {
 	echo "Configure NextCloud basics"
 
@@ -39,6 +76,8 @@ configure_server_basics() {
 	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
 
+# Configure HiDrive Next theming and branding
+# Usage: configure_theming
 configure_theming() {
 	echo "Configure theming"
 
@@ -51,15 +90,19 @@ configure_theming() {
 	execute_occ_command theming:config favicon "${FAVICON_DIR}/favicon.ico"
 	execute_occ_command config:app:set theming backgroundMime --value backgroundColor
 
+	# Set homepage URL if configured
 	IONOS_HOMEPAGE=$(execute_occ_command config:system:get ionos_homepage)
 	if [ -n "${IONOS_HOMEPAGE}" ]; then
 		execute_occ_command theming:config url "${IONOS_HOMEPAGE}"
 	fi
 }
 
+# Configure IONOS processes app with API credentials
+# Usage: configure_ionos_processes_app
 configure_ionos_processes_app() {
 	echo "Configure nc_ionos_processes app"
 
+	# Check required environment variables
 	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
 		echo "\033[1;33mWarning: IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app\033[0m"
 		return
@@ -70,6 +113,8 @@ configure_ionos_processes_app() {
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
+# Configure serverinfo app with authentication token
+# Usage: configure_serverinfo_app
 configure_serverinfo_app() {
 	echo "Configure serverinfo app"
 
@@ -81,9 +126,13 @@ configure_serverinfo_app() {
 	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
+# Configure Collabora/richdocuments integration
+# Usage: configure_collabora_app
 configure_collabora_app() {
+	# Disable app initially
 	execute_occ_command app:disable richdocuments
 
+	# Validate required environment variables
 	if ! [ "${COLLABORA_HOST}" ] ; then
 		fail Collabora host is not set
 	fi
@@ -92,11 +141,13 @@ configure_collabora_app() {
 		fail Collabora edit groups are not set
 	fi
 
+	# Configure and enable Collabora
 	execute_occ_command app:enable richdocuments
 	execute_occ_command config:app:set richdocuments wopi_url --value="${COLLABORA_HOST}"
 	execute_occ_command config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
 	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
+	# Configure SSL certificate verification
 	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
@@ -149,6 +200,12 @@ config_apps() {
 	execute_occ_command config:app:set dav system_addressbook_exposed --value="no"
 }
 
+#===============================================================================
+# App Management Functions
+#===============================================================================
+
+# Disable a single HiDrive Next app with error handling
+# Usage: disable_single_app <app_name>
 disable_single_app() {
 	# Disable app and check if it was disabled
 	# Fail if disabling the app failed
@@ -162,6 +219,8 @@ disable_single_app() {
 		fi
 }
 
+# Disable multiple apps based on the DISABLED_APPS list
+# Usage: disable_configured_apps
 disable_configured_apps() {
 	echo "Disable apps"
 
@@ -182,6 +241,12 @@ disable_configured_apps() {
 	echo "Disabled ${_disabled_apps_count} apps."
 }
 
+#===============================================================================
+# Configuration Setup Functions
+#===============================================================================
+
+# Add HiDrive Next configuration partials for app paths
+# Usage: setup_config_partials
 setup_config_partials() {
 	echo "Add config partials ..."
 
@@ -209,7 +274,14 @@ setup_config_partials() {
 	EOF
 }
 
+#===============================================================================
+# Main Execution Function
+#===============================================================================
+
+# Main function to orchestrate HiDrive Next configuration
+# Usage: main [args...]
 main() {
+	# Perform initial checks
 	check_dependencies
 
 	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
@@ -224,6 +296,7 @@ main() {
 		exit 1
 	fi
 
+	# Execute configuration steps
 	setup_config_partials
 	configure_server_basics
 	config_apps
@@ -231,4 +304,5 @@ main() {
 	disable_configured_apps
 }
 
+# Execute main function with all script arguments
 main "${@}"
