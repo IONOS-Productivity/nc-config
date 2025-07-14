@@ -101,7 +101,7 @@ enable_apps() {
 	echo
 	echo "Enabled ${_enabled_apps_count} apps in ${apps_dir}"
 	echo "Disabled ${_disabled_apps_count} apps in ${apps_dir}"
-	if [ ${_failed_apps_count} -gt 0 ]; then
+	if [ "${_failed_apps_count}" -gt 0 ]; then
 		fail "PANIC: Failed to enable ${_failed_apps_count} apps in ${apps_dir}: ${_failed_apps_list}"
 	fi
 	echo
