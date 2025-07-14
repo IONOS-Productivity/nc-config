@@ -10,7 +10,7 @@ NEXTCLOUD_DIR="${BDIR}/.."
 . ${BDIR}/enabled-core-apps.inc.sh
 . ${BDIR}/disabled-apps.inc.sh
 
-ooc() {
+execute_occ_command() {
 	php "${NEXTCLOUD_DIR}/occ" \
 		"${@}"
 }
@@ -27,7 +27,7 @@ enable_app() {
 	app_name="${1}"
 	echo "Enable app '${app_name}' ..."
 
-		if ! ooc app:enable "${app_name}"
+		if ! execute_occ_command app:enable "${app_name}"
 		then
 			echo "ERROR: Enabling app \"${app_name}\" failed."
 			return 1
@@ -42,7 +42,7 @@ disable_app() {
 	app_name="${1}"
 	echo "Disable app '${app_name}' ..."
 
-		if ! ooc app:disable "${app_name}"
+		if ! execute_occ_command app:disable "${app_name}"
 		then
 			fail "Disable app \"${app_name}\" failed."
 		fi
