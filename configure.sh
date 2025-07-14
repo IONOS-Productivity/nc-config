@@ -93,7 +93,7 @@ verify_nextcloud_installation() {
 	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
 
 	# Parse validation
-	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
+	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != "false" ]; then
 		log_info "Error testing Nextcloud install status. This is the output of occ status:"
 		execute_occ_command status
 		log_fatal "Nextcloud is not installed, abort"
