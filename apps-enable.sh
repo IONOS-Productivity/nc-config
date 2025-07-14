@@ -61,7 +61,7 @@ enable_apps() {
 		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
 	fi
 
-	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
+	_enabled_apps=$(execute_occ_command app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 
 	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d | sort); do
 		app_name="$( basename "${app}" )"
@@ -114,7 +114,7 @@ enable_core_apps() {
 
 	echo "Check required core apps are enabled..."
 
-	disabled_apps=$(./occ app:list --disabled --output json | jq -j '.disabled | keys | join("\n")')
+	disabled_apps=$(execute_occ_command app:list --disabled --output json | jq -j '.disabled | keys | join("\n")')
 
 	if [ -z "${disabled_apps}" ]; then
 		echo "No disabled apps found."
