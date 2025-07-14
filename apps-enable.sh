@@ -15,8 +15,10 @@ execute_occ_command() {
 		"${@}"
 }
 
-fail() {
-	echo "${*}" >&2
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >&2
 	exit 1
 }
 
@@ -44,7 +46,7 @@ disable_app() {
 
 		if ! execute_occ_command app:disable "${app_name}"
 		then
-			fail "Disable app \"${app_name}\" failed."
+			log_fatal "Disable app \"${app_name}\" failed."
 		fi
 }
 
@@ -58,7 +60,7 @@ enable_apps() {
 	_failed_apps_list=""
 
 	if [ ! -d "${apps_dir}" ]; then
-		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
+		log_fatal "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
 	fi
 
 	_enabled_apps=$(execute_occ_command app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
@@ -102,7 +104,7 @@ enable_apps() {
 	echo "Enabled ${_enabled_apps_count} apps in ${apps_dir}"
 	echo "Disabled ${_disabled_apps_count} apps in ${apps_dir}"
 	if [ "${_failed_apps_count}" -gt 0 ]; then
-		fail "PANIC: Failed to enable ${_failed_apps_count} apps in ${apps_dir}: ${_failed_apps_list}"
+		log_fatal "PANIC: Failed to enable ${_failed_apps_count} apps in ${apps_dir}: ${_failed_apps_list}"
 	fi
 	echo
 }
@@ -145,7 +147,7 @@ enable_core_apps() {
 
 main() {
 	if ! jq --version 2>&1 >/dev/null; then
-		fail "Error: jq is required"
+		log_fatal "Error: jq is required"
 	fi
 
 	echo "Enable all apps in 'apps-external' folder"

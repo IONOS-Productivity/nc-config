@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 
-fail() {
-	echo "${*}" >/dev/stderr
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >/dev/stderr
 	exit 1
 }
 
@@ -37,49 +39,49 @@ main() {
 	# - ENC_OIDC_SCOPES (space separated list of scopes, usually at least "openid email profile")
 
 	if [ ! -x "occ" ]; then
-		fail "occ command not found, are you in Nextcloud's root dir?"
+		log_fatal "occ command not found, are you in Nextcloud's root dir?"
 	fi
 
 	if ! jq --version 2>/dev/null 2>&1; then
-		fail "jq not found"
+		log_fatal "jq not found"
 	fi
 
 	if [ -z "${ENC_OIDC_PROVIDER_IDENTIFIER}" ]; then
-		fail "ENC_OIDC_PROVIDER_IDENTIFIER not set"
+		log_fatal "ENC_OIDC_PROVIDER_IDENTIFIER not set"
 	fi
 
 	if [ -z "${ENC_OIDC_CLIENT_ID}" ]; then
-		fail "ENC_OIDC_CLIENT_ID not set"
+		log_fatal "ENC_OIDC_CLIENT_ID not set"
 	fi
 
 	if [ -z "${ENC_OIDC_SECRET}" ]; then
-		fail "ENC_OIDC_SECRET not set"
+		log_fatal "ENC_OIDC_SECRET not set"
 	fi
 
 	if [ -z "${ENC_OIDC_DISCOVERY_URI}" ]; then
-		fail "ENC_OIDC_DISCOVERY_URI not set"
+		log_fatal "ENC_OIDC_DISCOVERY_URI not set"
 	fi
 
 	if [ -z "${ENC_OIDC_EXTRA_CLAIMS}" ]; then
-		fail "ENC_OIDC_EXTRA_CLAIMS not set"
+		log_fatal "ENC_OIDC_EXTRA_CLAIMS not set"
 	fi
 
 	if [ -z "${ENC_OIDC_MAPPING_UID}" ]; then
-		fail "ENC_OIDC_MAPPING_UID not set"
+		log_fatal "ENC_OIDC_MAPPING_UID not set"
 	fi
 
 	if [ -z "${ENC_OIDC_SCOPES}" ]; then
-		fail "ENC_OIDC_SCOPES not set"
+		log_fatal "ENC_OIDC_SCOPES not set"
 	fi
 
 	if ! configure_user_oidc; then
-		fail "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" (occ failed)"
+		log_fatal "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" (occ failed)"
 	fi
 
 	provider_id=$( ./occ user_oidc:provider "${ENC_OIDC_PROVIDER_IDENTIFIER}" --output=json | jq --arg "clientId" "${ENC_OIDC_CLIENT_ID}" 'select(.clientId == $clientId).id' 2>/dev/null )
 
 	if [ -z "${provider_id}" ]; then
-		fail "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\": not found"
+		log_fatal "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\": not found"
 	fi
 
 	echo "Provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" created. Provider ID: ${provider_id}"

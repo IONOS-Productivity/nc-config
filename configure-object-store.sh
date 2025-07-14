@@ -2,8 +2,10 @@
 
 NEXTCLOUD_ROOT_DIR="/var/www/html"
 
-fail() {
-	echo "${*}" >/dev/stderr
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >/dev/stderr
 	exit 1
 }
 
@@ -52,39 +54,39 @@ main() {
 	use_path_style_value="false"
 
 	if [ ! -x "occ" ]; then
-		fail "occ command not found, are you in Nextcloud's root dir?"
+		log_fatal "occ command not found, are you in Nextcloud's root dir?"
 	fi
 
 	if [ -z "${ENC_OBJECT_STORAGE_BUCKET_NAME}" ]; then
-		fail "ENC_OBJECT_STORAGE_BUCKET_NAME not set"
+		log_fatal "ENC_OBJECT_STORAGE_BUCKET_NAME not set"
 	fi
 
 	if [ -z "${ENC_OBJECT_STORAGE_ACCESS_KEY}" ]; then
-		fail "ENC_OBJECT_STORAGE_ACCESS_KEY not set"
+		log_fatal "ENC_OBJECT_STORAGE_ACCESS_KEY not set"
 	fi
 
 	if [ -z "${ENC_OBJECT_STORAGE_SECRET}" ]; then
-		fail "ENC_OBJECT_STORAGE_SECRET not set"
+		log_fatal "ENC_OBJECT_STORAGE_SECRET not set"
 	fi
 
 	if [ -z "${ENC_OBJECT_STORAGE_REGION}" ]; then
-		fail "ENC_OBJECT_STORAGE_REGION not set"
+		log_fatal "ENC_OBJECT_STORAGE_REGION not set"
 	fi
 
 	if [ -z "${ENC_OBJECT_STORAGE_HOSTNAME}" ]; then
-		fail "ENC_OBJECT_STORAGE_HOSTNAME not set"
+		log_fatal "ENC_OBJECT_STORAGE_HOSTNAME not set"
 	fi
 
 	if [ -z "${ENC_OBJECT_STORAGE_PORT}" ]; then
-		fail "ENC_OBJECT_STORAGE_PORT not set"
+		log_fatal "ENC_OBJECT_STORAGE_PORT not set"
 	fi
 
 	if [ -n "${ENC_OBJECT_STORAGE_USE_SSL}" ] && [ "${ENC_OBJECT_STORAGE_USE_SSL}" != "true" ] && [ "${ENC_OBJECT_STORAGE_USE_SSL}" != "false" ]; then
-		fail "ENC_OBJECT_STORAGE_USE_SSL, if set should either be true or false"
+		log_fatal "ENC_OBJECT_STORAGE_USE_SSL, if set should either be true or false"
 	fi
 
 	if [ -n "${ENC_OBJECT_STORAGE_USE_PATH_STYLE}" ] && [ "${ENC_OBJECT_STORAGE_USE_PATH_STYLE}" != "true" ] && [ "${ENC_OBJECT_STORAGE_USE_PATH_STYLE}" != "false" ]; then
-		fail "ENC_OBJECT_STORAGE_USE_PATH_STYLE, if set should either be true or false"
+		log_fatal "ENC_OBJECT_STORAGE_USE_PATH_STYLE, if set should either be true or false"
 	fi
 
 	if [ "${ENC_OBJECT_STORAGE_USE_SSL}" = "false" ]; then
@@ -98,7 +100,7 @@ main() {
 	echo "Writing ${config} ..."
 
 	if ! write_config_file; then
-		fail "Error writing the object store config: ${config}"
+		log_fatal "Error writing the object store config: ${config}"
 	fi
 
 	echo "Object store config written: ${config}"
