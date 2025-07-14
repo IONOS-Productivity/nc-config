@@ -14,14 +14,16 @@ SHIPPED_JSON="${BDIR}/../core/shipped.json"
 
 . ${BDIR}/disabled-apps.inc.sh
 
-fail() {
-	echo "${*}"
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >&2
 	exit 1
 }
 
 main() {
 	if ! which jq 2>&1 >/dev/null; then
-		fail "Error: jq is required"
+		log_fatal "jq is required"
 	fi
 
 	# alwaysEnabled should be the only attribute in this json file which really matters,
