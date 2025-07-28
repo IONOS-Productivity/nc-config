@@ -217,6 +217,7 @@ config_apps() {
 	execute_occ_command config:app:set --value no files_sharing incoming_server2server_group_share_enabled
 	execute_occ_command config:app:set --value no files_sharing lookupServerEnabled
 	execute_occ_command config:app:set --value no files_sharing lookupServerUploadEnabled
+	execute_occ_command config:app:set --value true --type boolean files_sharing show_federated_shares_as_internal
 
 	log_info "Configure internal share settings"
 	# To limit user and group display in the username search field of the
