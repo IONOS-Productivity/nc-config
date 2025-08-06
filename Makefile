@@ -10,7 +10,7 @@ TARGET_PACKAGE_NAME=hidrivenext-server.zip
 # Core build targets
 .PHONY: help clean .remove_node_modules
 # Custom NPM packages
-.PHONY: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue
+.PHONY: build_custom_npms build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue
 # Main Nextcloud build
 .PHONY: build_nextcloud
 # Applications
@@ -59,7 +59,10 @@ build_nextcloud_vue: ## Build custom nextcloud vue
 	npm ci && \
 	npm run build
 
-build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build Nextcloud
+build_custom_npms: .remove_node_modules build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build all custom npm packages
+	@echo "Custom npm packages built"
+
+build_nextcloud: build_custom_npms ## Build Nextcloud
 	set -e && \
 	composer install --no-dev -o && \
 	npm ci && \
@@ -176,5 +179,5 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
 
-build_locally: .remove_node_modules build_nextcloud .build_deps ## Build all apps/themes for local development
+build_locally: build_nextcloud .build_deps ## Build all apps/themes for local development
 	echo "Everything done for local/dev"
