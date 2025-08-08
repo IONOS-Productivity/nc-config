@@ -3,7 +3,7 @@
 
 TARGET_PACKAGE_NAME=hidrivenext-server.zip
 
-.PHONY: help .build_deps add_config_partials build_release build_locally build_dep_ionos_theme build_dep_nc_ionos_processes_app build_dep_simplesettings_app build_richdocuments_app build_dep_user_oidc_app zip_dependencies patch_shipped_json version.json
+.PHONY: help clean .remove_node_modules build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue build_nextcloud build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_ionos_theme build_dep_theming_app add_config_partials patch_shipped_json version.json zip_dependencies .build_deps build_release build_locally
 
 help: ## This help.
 	@echo "Usage: make [target]"
@@ -13,6 +13,11 @@ help: ## This help.
 # This will output the help for each task
 # thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .DEFAULT_GOAL := help
+
+clean: ## Clean up build artifacts
+	rm -rf node_modules
+	rm -f version.json
+	rm -f $(TARGET_PACKAGE_NAME)
 
 .remove_node_modules: ## Remove node_modules
 	rm -rf node_modules
