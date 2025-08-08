@@ -1,7 +1,11 @@
 # SPDX-FileCopyrightText: 2024 Kai Henseler <kai.henseler@strato.de>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# Build configuration
 TARGET_PACKAGE_NAME=hidrivenext-server.zip
+
+# Required environment variables:
+# - FONTAWESOME_PACKAGE_TOKEN: Token for FontAwesome package access
 
 # Core build targets
 .PHONY: help clean .remove_node_modules
@@ -56,6 +60,7 @@ build_nextcloud_vue: ## Build custom nextcloud vue
 	npm run build
 
 build_nextcloud: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build Nextcloud
+	set -e && \
 	composer install --no-dev -o && \
 	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run build
