@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Build configuration
-TARGET_PACKAGE_NAME=hidrivenext-server.zip
+TARGET_PACKAGE_NAME = hidrivenext-server.zip
 
 # Required environment variables:
 # - FONTAWESOME_PACKAGE_TOKEN: Token for FontAwesome package access
