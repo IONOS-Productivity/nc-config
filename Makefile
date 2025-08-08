@@ -41,29 +41,35 @@ help: ## This help.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 clean: ## Clean up build artifacts
+	@echo "Cleaning build artifacts..."
 	rm -rf node_modules
 	rm -f version.json
 	rm -f $(TARGET_PACKAGE_NAME)
 
 .remove_node_modules: ## Remove node_modules
+	@echo "Removing node_modules directories..."
 	rm -rf node_modules
 
 build_mdi_svg: check-env ## Build custom mdi svg
+	@echo "Building custom MDI SVG package..."
 	cd custom-npms/nc-mdi-svg && \
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
 	npm run build
 
 build_mdi_js: ## Build custom mdi js
+	@echo "Building custom MDI JS package..."
 	cd custom-npms/nc-mdi-js && \
 	npm ci && \
 	npm run build
 
 build_vue_icons_package: ## Build custom vue icons package
+	@echo "Building custom Vue icons package..."
 	cd custom-npms/nc-vue-material-design-icons && \
 	npm ci && \
 	npm run build
 
 build_nextcloud_vue: ## Build custom nextcloud vue
+	@echo "Building custom Nextcloud Vue package..."
 	cd custom-npms/nc-nextcloud-vue && \
 	npm ci && \
 	npm run build
@@ -117,12 +123,15 @@ build_dep_theming_app: ## Build the custom css
 	make build_css
 
 add_config_partials: ## Copy custom config files to Nextcloud config
+	@echo "Copying config files..."
 	cp IONOS/configs/*.config.php config/
 
 patch_shipped_json: ## Patch shipped.json to make core apps disableable
+	@echo "Patching shipped.json..."
 	IONOS/apps-disable.sh
 
 version.json: ## Generate version file
+	@echo "Generating version.json..."
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	ncVersion=$$(php -r 'include("version.php");echo implode(".", $$OC_Version);') && \
