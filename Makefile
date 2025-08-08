@@ -3,7 +3,20 @@
 
 TARGET_PACKAGE_NAME=hidrivenext-server.zip
 
-.PHONY: help clean .remove_node_modules build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue build_nextcloud build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_ionos_theme build_dep_theming_app add_config_partials patch_shipped_json version.json zip_dependencies .build_deps build_release build_locally
+# Core build targets
+.PHONY: help clean .remove_node_modules
+# Custom NPM packages
+.PHONY: build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue
+# Main Nextcloud build
+.PHONY: build_nextcloud
+# Applications
+.PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app
+# Themes
+.PHONY: build_dep_ionos_theme
+# Configuration and packaging
+.PHONY: add_config_partials patch_shipped_json version.json zip_dependencies
+# Meta targets
+.PHONY: .build_deps build_release build_locally
 
 help: ## This help.
 	@echo "Usage: make [target]"
