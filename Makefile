@@ -123,7 +123,7 @@ version.json: ## Generate version file
 	jq . version.json
 
 zip_dependencies: patch_shipped_json version.json ## Zip relevant files
-	echo "zip relevant files to $(TARGET_PACKAGE_NAME)" && \
+	@echo "zip relevant files to $(TARGET_PACKAGE_NAME)" && \
 	zip -r "$(TARGET_PACKAGE_NAME)" \
 		IONOS/ \
 		3rdparty/ \
@@ -181,7 +181,7 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 .build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
-	echo "Everything done for a release"
+	@echo "Everything done for a release"
 
 build_locally: build_nextcloud .build_deps ## Build all apps/themes for local development
-	echo "Everything done for local/dev"
+	@echo "Everything done for local/dev"
