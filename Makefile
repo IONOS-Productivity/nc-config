@@ -41,41 +41,41 @@ help: ## This help.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 clean: ## Clean up build artifacts
-	@echo "Cleaning build artifacts..."
+	@echo "[i] Cleaning build artifacts..."
 	rm -rf node_modules
 	rm -f version.json
 	rm -f $(TARGET_PACKAGE_NAME)
 
 .remove_node_modules: ## Remove node_modules
-	@echo "Removing node_modules directories..."
+	@echo "[i] Removing node_modules directories..."
 	rm -rf node_modules
 
 build_mdi_svg: check-env ## Build custom mdi svg
-	@echo "Building custom MDI SVG package..."
+	@echo "[i] Building custom MDI SVG package..."
 	cd custom-npms/nc-mdi-svg && \
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
 	npm run build
 
 build_mdi_js: ## Build custom mdi js
-	@echo "Building custom MDI JS package..."
+	@echo "[i] Building custom MDI JS package..."
 	cd custom-npms/nc-mdi-js && \
 	npm ci && \
 	npm run build
 
 build_vue_icons_package: ## Build custom vue icons package
-	@echo "Building custom Vue icons package..."
+	@echo "[i] Building custom Vue icons package..."
 	cd custom-npms/nc-vue-material-design-icons && \
 	npm ci && \
 	npm run build
 
 build_nextcloud_vue: ## Build custom nextcloud vue
-	@echo "Building custom Nextcloud Vue package..."
+	@echo "[i] Building custom Nextcloud Vue package..."
 	cd custom-npms/nc-nextcloud-vue && \
 	npm ci && \
 	npm run build
 
 build_custom_npms: .remove_node_modules build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build all custom npm packages
-	@echo "Custom npm packages built"
+	@echo "[i] Custom npm packages built"
 
 build_nextcloud_only:  ## Build HiDrive Next only (no custom npm packages rebuild)
 	set -e && \
@@ -84,7 +84,7 @@ build_nextcloud_only:  ## Build HiDrive Next only (no custom npm packages rebuil
 	NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 build_nextcloud: build_custom_npms build_nextcloud_only ## Build HiDrive Next (rebuild custom npm packages)
-	@echo "HiDrive Next built"
+	@echo "[i] HiDrive Next built"
 
 build_dep_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
@@ -123,24 +123,24 @@ build_dep_theming_app: ## Build the custom css
 	make build_css
 
 add_config_partials: ## Copy custom config files to Nextcloud config
-	@echo "Copying config files..."
+	@echo "[i] Copying config files..."
 	cp IONOS/configs/*.config.php config/
 
 patch_shipped_json: ## Patch shipped.json to make core apps disableable
-	@echo "Patching shipped.json..."
+	@echo "[i] Patching shipped.json..."
 	IONOS/apps-disable.sh
 
 version.json: ## Generate version file
-	@echo "Generating version.json..."
+	@echo "[i] Generating version.json..."
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	ncVersion=$$(php -r 'include("version.php");echo implode(".", $$OC_Version);') && \
 	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef  --arg ncVersion $$ncVersion '{buildDate: $$buildDate, buildRef: $$buildRef, ncVersion: $$ncVersion}' > version.json && \
-	echo "version.json created" && \
+	echo "[i] version.json created" && \
 	jq . version.json
 
 zip_dependencies: patch_shipped_json version.json ## Zip relevant files
-	@echo "zip relevant files to $(TARGET_PACKAGE_NAME)" && \
+	@echo "[i] zip relevant files to $(TARGET_PACKAGE_NAME)" && \
 	zip -r "$(TARGET_PACKAGE_NAME)" \
 		IONOS/ \
 		3rdparty/ \
@@ -198,7 +198,7 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 .build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
-	@echo "Everything done for a release"
+	@echo "[i] Everything done for a release"
 
 build_locally: build_nextcloud .build_deps ## Build all apps/themes for local development
-	@echo "Everything done for local/dev"
+	@echo "[i] Everything done for local/dev"
