@@ -7,8 +7,16 @@ TARGET_PACKAGE_NAME = hidrivenext-server.zip
 # Required environment variables:
 # - FONTAWESOME_PACKAGE_TOKEN: Token for FontAwesome package access
 
+# Environment variable validation
+check-env:
+	@if [ -z "$(FONTAWESOME_PACKAGE_TOKEN)" ]; then \
+		echo "Error: FONTAWESOME_PACKAGE_TOKEN environment variable is not set"; \
+		echo "Please set it before building custom npm packages"; \
+		exit 1; \
+	fi
+
 # Core build targets
-.PHONY: help clean .remove_node_modules
+.PHONY: help clean .remove_node_modules check-env
 # Custom NPM packages
 .PHONY: build_custom_npms build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue
 # Main Nextcloud build
@@ -40,7 +48,7 @@ clean: ## Clean up build artifacts
 .remove_node_modules: ## Remove node_modules
 	rm -rf node_modules
 
-build_mdi_svg: ## Build custom mdi svg
+build_mdi_svg: check-env ## Build custom mdi svg
 	cd custom-npms/nc-mdi-svg && \
 	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
 	npm run build
