@@ -12,7 +12,7 @@ TARGET_PACKAGE_NAME=hidrivenext-server.zip
 # Custom NPM packages
 .PHONY: build_custom_npms build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue
 # Main Nextcloud build
-.PHONY: build_nextcloud
+.PHONY: build_nextcloud build_nextcloud_only
 # Applications
 .PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app
 # Themes
@@ -62,11 +62,14 @@ build_nextcloud_vue: ## Build custom nextcloud vue
 build_custom_npms: .remove_node_modules build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build all custom npm packages
 	@echo "Custom npm packages built"
 
-build_nextcloud: build_custom_npms ## Build Nextcloud
+build_nextcloud_only:  ## Build HiDrive Next only (no custom npm packages rebuild)
 	set -e && \
 	composer install --no-dev -o && \
 	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run build
+
+build_nextcloud: build_custom_npms build_nextcloud_only ## Build HiDrive Next (rebuild custom npm packages)
+	@echo "HiDrive Next built"
 
 build_dep_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
