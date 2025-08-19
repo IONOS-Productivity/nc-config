@@ -83,7 +83,16 @@ build_nextcloud_only:  ## Build HiDrive Next only (no custom npm packages rebuil
 	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
+build_nextcloud_dev:  ## Build HiDrive Next only (no custom npm packages rebuild)
+	set -e && \
+	composer install --no-dev -o && \
+	npm ci && \
+	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
+
 build_nextcloud: build_custom_npms build_nextcloud_only ## Build HiDrive Next (rebuild custom npm packages)
+	@echo "[i] HiDrive Next built"
+
+dev_nextcloud: build_custom_npms build_nextcloud_dev ## Build HiDrive Next (rebuild custom npm packages)
 	@echo "[i] HiDrive Next built"
 
 build_dep_simplesettings_app: ## Install and build simplesettings app
@@ -200,5 +209,5 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	@echo "[i] Everything done for a release"
 
-build_locally: build_nextcloud .build_deps ## Build all apps/themes for local development
+build_locally: dev_nextcloud .build_deps ## Build all apps/themes for local development
 	@echo "[i] Everything done for local/dev"
