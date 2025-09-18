@@ -188,7 +188,7 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "apps-*/*/composer.phar" \
 	-x "apps-*/*/.tx" \
 	-x "apps-*/*/.github" \
-	-x "apps-*/*/src**" \
+	-x "apps-*/*/src" \
 	-x "apps-*/*/node_modules**" \
 	-x "apps-*/*/vendor-bin**" \
 	-x "apps-*/*/tests**" \
