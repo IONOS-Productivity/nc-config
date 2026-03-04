@@ -20,7 +20,8 @@ configure_user_oidc() {
 		--extra-claims="${ENC_OIDC_EXTRA_CLAIMS}" \
 		--mapping-uid="${ENC_OIDC_MAPPING_UID}" \
 		--unique-uid=0 \
-		--scope="${ENC_OIDC_SCOPES}"
+		--scope="${ENC_OIDC_SCOPES}" \
+		--check-bearer=1
 
 	# Don't show a login page, send users directly to the ID provider
 	./occ config:app:set --value=0 user_oidc allow_multiple_user_backends
