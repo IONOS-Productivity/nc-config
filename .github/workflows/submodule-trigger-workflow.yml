@@ -1,0 +1,267 @@
+# SPDX-FileCopyrightText: 2026 IONOS Productivity
+# SPDX-License-Identifier: MIT
+#
+# This workflow automates submodule updates in nc-server when commits are pushed to main.
+#
+# How it works:
+# 1. Triggers when a commit is pushed to main in the submodule repo
+# 2. Creates a pre-release in the submodule repository
+# 3. Creates update branch from BASE_BRANCH (ionos-dev)
+# 4. Creates PR to merge into BASE_BRANCH
+#
+# To adapt for other submodules:
+# 1. Copy this workflow file to the submodule repository's .github/workflows/
+# 2. Update the 'if' condition in create-submodule-pr job
+# 3. Update the env variables in create-submodule-pr job:
+#    - SUBMODULE_NAME: Directory name in nc-server (e.g., "IONOS")
+#    - SUBMODULE_REPO: Full repository name (e.g., "IONOS-Productivity/nc-config")
+#    - TARGET_REPO: Where the submodule lives (typically "IONOS-Productivity/nc-server")
+#    - BASE_BRANCH: Default target branch (typically "ionos-dev")
+#    - COMMIT_PREFIX: Commit message prefix (e.g., "IONOS(config)")
+# 4. Ensure NCW_SERVER_PAT secret is configured in the submodule repository
+#
+name: Create pre-release and update nc-server submodule
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-prerelease:
+    runs-on: [ubuntu-latest]
+    outputs:
+      sha: ${{ steps.commit-info.outputs.sha }}
+      short_sha: ${{ steps.commit-info.outputs.short_sha }}
+      tag_name: ${{ steps.commit-info.outputs.short_sha }}
+      release_url: ${{ steps.create-release.outputs.html_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get commit information
+        id: commit-info
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Check GitHub CLI installation
+        id: check-gh
+        run: |
+          if command -v gh &> /dev/null; then
+            echo "installed=true" >> $GITHUB_OUTPUT
+          else
+            echo "installed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install GitHub CLI
+        if: steps.check-gh.outputs.installed != 'true'
+        run: |
+          echo "Installing GitHub CLI..."
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Create pre-release
+        id: create-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if the release already exists
+          if gh release view "${{ steps.commit-info.outputs.short_sha }}" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            # Release exists, get its URL
+            RELEASE_URL=$(gh release view "${{ steps.commit-info.outputs.short_sha }}" --repo "${{ github.repository }}" --json url -q ".url")
+          else
+            # Release does not exist, create it
+            RELEASE_URL=$(gh release create "${{ steps.commit-info.outputs.short_sha }}" \
+              --title "Pre-release ${{ steps.commit-info.outputs.short_sha }}" \
+              --generate-notes \
+              --prerelease \
+              --repo "${{ github.repository }}")
+          fi
+          echo "html_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+
+  create-submodule-pr:
+    needs: create-prerelease
+    runs-on: [ubuntu-latest]
+    # Update this condition to match SUBMODULE_REPO when adapting for other submodules
+    if: github.repository == 'IONOS-Productivity/nc-config'
+    outputs:
+      pr_url: ${{ steps.create-pr.outputs.pr_url }}
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+    env:
+      # Configuration for submodule updates - customize these values for different submodules
+      SUBMODULE_NAME: IONOS                              # Submodule directory name in nc-server
+      SUBMODULE_REPO: IONOS-Productivity/nc-config      # Source repository (must match 'if' condition above)
+      TARGET_REPO: IONOS-Productivity/nc-server         # Target repository containing the submodule
+      BASE_BRANCH: ionos-dev                             # Target branch for PRs
+      COMMIT_PREFIX: "IONOS(config)"                     # Prefix for commit messages and PR titles
+
+    steps:
+      - name: Check GitHub CLI installation
+        id: check-gh
+        run: |
+          if command -v gh &> /dev/null; then
+            echo "installed=true" >> $GITHUB_OUTPUT
+          else
+            echo "installed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install GitHub CLI
+        if: steps.check-gh.outputs.installed != 'true'
+        run: |
+          echo "Installing GitHub CLI..."
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Checkout nc-server repository
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.TARGET_REPO }}
+          token: ${{ secrets.NCW_SERVER_PAT }}
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+          sparse-checkout: |
+            ${{ env.SUBMODULE_NAME }}
+            .gitmodules
+
+
+      - name: Update submodule
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Configure git to use HTTPS instead of SSH for GitHub
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://".insteadOf "ssh://"
+
+          # Create a new branch for the update from BASE_BRANCH
+          # Replace slashes with dashes for cleaner branch names
+          SUBMODULE_NAME_CLEAN=$(echo "${{ env.SUBMODULE_NAME }}" | tr '/' '-')
+          BRANCH_NAME="update-${SUBMODULE_NAME_CLEAN}-submodule-${{ needs.create-prerelease.outputs.short_sha }}"
+          git fetch origin
+          git checkout -B "$BRANCH_NAME" "origin/${{ env.BASE_BRANCH }}"
+
+          # Initialize only the target submodule
+          git submodule update --init "${{ env.SUBMODULE_NAME }}"
+
+          # Update the submodule to the new commit
+          cd "${{ env.SUBMODULE_NAME }}"
+          git fetch origin main
+          git checkout ${{ needs.create-prerelease.outputs.sha }}
+
+          # Get the commit message for description
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s')
+          cd ..
+
+          # Commit the submodule update with release link
+          RELEASE_URL="https://github.com/${{ env.SUBMODULE_REPO }}/releases/tag/${{ needs.create-prerelease.outputs.short_sha }}"
+          git add "${{ env.SUBMODULE_NAME }}"
+          git commit -m "${{ env.COMMIT_PREFIX }}: update submodule ${{ needs.create-prerelease.outputs.short_sha }} ($COMMIT_MSG)" \
+            -m "" \
+            -m "$RELEASE_URL" \
+            -m "" \
+            -m "Signed-off-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          # Push the branch
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Pull Request
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ secrets.NCW_SERVER_PAT }}
+        run: |
+          # Replace slashes with dashes for cleaner branch names
+          SUBMODULE_NAME_CLEAN=$(echo "${{ env.SUBMODULE_NAME }}" | tr '/' '-')
+          BRANCH_NAME="update-${SUBMODULE_NAME_CLEAN}-submodule-${{ needs.create-prerelease.outputs.short_sha }}"
+
+          # Get the commit message from submodule
+          cd "${{ env.SUBMODULE_NAME }}"
+          COMMIT_MSG=$(git log -1 --pretty=format:'%s')
+          cd ..
+
+          RELEASE_URL="https://github.com/${{ env.SUBMODULE_REPO }}/releases/tag/${{ needs.create-prerelease.outputs.short_sha }}"
+
+          # Fetch the source PR metadata (URL + milestone) from the commit→PR association API.
+          # This is non-fatal: if the lookup fails for any reason (token scope, no associated PR,
+          # API error), both variables are left empty and the PR is still created successfully.
+          SOURCE_PR_DATA=$(gh api \
+            "repos/${{ env.SUBMODULE_REPO }}/commits/${{ needs.create-prerelease.outputs.sha }}/pulls" \
+            --jq '.[0] | {url: .html_url, milestone: .milestone.title} | to_entries[] | select(.value != null) | "\(.key)=\(.value)"' \
+            2>/dev/null || true)
+          SOURCE_PR_URL=$(echo "$SOURCE_PR_DATA" | grep '^url=' | cut -d= -f2-)
+          SOURCE_MILESTONE=$(echo "$SOURCE_PR_DATA" | grep '^milestone=' | cut -d= -f2-)
+
+          # Build PR body
+          PR_BODY="${{ env.COMMIT_PREFIX }}: update submodule ${{ needs.create-prerelease.outputs.short_sha }} ($COMMIT_MSG)"$'\n\n'"$RELEASE_URL"
+          if [ -n "$SOURCE_PR_URL" ]; then
+            PR_BODY="$PR_BODY"$'\n\n'"**Source PR:** $SOURCE_PR_URL"
+          fi
+          if [ -n "$SOURCE_MILESTONE" ]; then
+            PR_BODY="$PR_BODY"$'\n\n'"**Milestone:** $SOURCE_MILESTONE"
+          fi
+          PR_BODY="$PR_BODY"$'\n\n'"---"$'\n'"Auto-generated PR from ${{ env.SUBMODULE_NAME }} repository push to main branch."
+
+          # Check if a PR already exists for this branch
+          EXISTING_PR_DATA=$(gh pr list \
+            --repo "${{ env.TARGET_REPO }}" \
+            --head "$BRANCH_NAME" \
+            --state open \
+            --json url,number \
+            --jq '.[0]')
+
+          if [ -n "$EXISTING_PR_DATA" ] && [ "$EXISTING_PR_DATA" != "null" ]; then
+            PR_URL=$(echo "$EXISTING_PR_DATA" | jq -r '.url')
+            PR_NUMBER=$(echo "$EXISTING_PR_DATA" | jq -r '.number')
+            echo "::notice::PR already exists: $PR_URL"
+          else
+            # Build gh pr create command, optionally adding --milestone if one was found on the source PR
+            PR_CMD=(gh pr create \
+              --repo "${{ env.TARGET_REPO }}" \
+              --title "${{ env.COMMIT_PREFIX }}: update submodule ${{ needs.create-prerelease.outputs.short_sha }} ($COMMIT_MSG)" \
+              --body "$PR_BODY" \
+              --base "${{ env.BASE_BRANCH }}" \
+              --head "$BRANCH_NAME")
+            if [ -n "$SOURCE_MILESTONE" ]; then
+              PR_CMD+=(--milestone "$SOURCE_MILESTONE")
+            fi
+
+            PR_URL=$("${PR_CMD[@]}")
+            # Fetch the PR number via gh pr view instead of relying on gh pr create --json output format
+            PR_NUMBER=$(gh pr view "$PR_URL" --repo "${{ env.TARGET_REPO }}" --json number --jq '.number')
+            echo "::notice::Created PR: $PR_URL"
+          fi
+
+          # Output the PR URL and number for other jobs
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+  log-details:
+    needs: [create-prerelease, create-submodule-pr]
+    runs-on: [ubuntu-latest]
+    if: always()
+
+    steps:
+      - name: Log workflow details
+        run: |
+          echo "::notice::✅ Created pre-release with tag ${{ needs.create-prerelease.outputs.tag_name }}"
+          echo "::notice::🔗 Release URL: ${{ needs.create-prerelease.outputs.release_url }}"
+          if [ "${{ needs.create-submodule-pr.result }}" == "success" ]; then
+            echo "::notice::📦 Submodule update PR created for nc-server"
+            if [ -n "${{ needs.create-submodule-pr.outputs.pr_url }}" ]; then
+              echo "::notice::🔀 PR URL: ${{ needs.create-submodule-pr.outputs.pr_url }}"
+            fi
+          fi
+          echo "::notice::💾 Commit: ${{ needs.create-prerelease.outputs.sha }}"
