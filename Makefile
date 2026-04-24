@@ -149,8 +149,13 @@ version.json: ## Generate version file
 	jq . version.json
 
 zip_dependencies: patch_shipped_json version.json ## Zip relevant files
+	@if [ ! -f .buildnumber ]; then \
+		echo "Error: .buildnumber file is missing. Inject it before packaging (e.g. echo 42 > .buildnumber)"; \
+		exit 1; \
+	fi
 	@echo "[i] zip relevant files to $(TARGET_PACKAGE_NAME)" && \
 	zip -r "$(TARGET_PACKAGE_NAME)" \
+		.buildnumber \
 		IONOS/ \
 		3rdparty/ \
 		apps/ \
