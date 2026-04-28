@@ -4,21 +4,8 @@
 # Build configuration
 TARGET_PACKAGE_NAME = hidrivenext-server.zip
 
-# Required environment variables:
-# - FONTAWESOME_PACKAGE_TOKEN: Token for FontAwesome package access
-
-# Environment variable validation
-check-env:
-	@if [ -z "$(FONTAWESOME_PACKAGE_TOKEN)" ]; then \
-		echo "Error: FONTAWESOME_PACKAGE_TOKEN environment variable is not set"; \
-		echo "Please set it before building custom npm packages"; \
-		exit 1; \
-	fi
-
 # Core build targets
-.PHONY: help clean .remove_node_modules check-env
-# Custom NPM packages
-.PHONY: build_custom_npms build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue
+.PHONY: help clean
 # Main Nextcloud build
 .PHONY: build_nextcloud build_nextcloud_only
 # Applications
@@ -46,37 +33,6 @@ clean: ## Clean up build artifacts
 	rm -f version.json
 	rm -f $(TARGET_PACKAGE_NAME)
 
-.remove_node_modules: ## Remove node_modules
-	@echo "[i] Removing node_modules directories..."
-	rm -rf node_modules
-
-build_mdi_svg: check-env ## Build custom mdi svg
-	@echo "[i] Building custom MDI SVG package..."
-	cd custom-npms/nc-mdi-svg && \
-	FONTAWESOME_PACKAGE_TOKEN=$(FONTAWESOME_PACKAGE_TOKEN) npm ci && \
-	npm run build
-
-build_mdi_js: ## Build custom mdi js
-	@echo "[i] Building custom MDI JS package..."
-	cd custom-npms/nc-mdi-js && \
-	npm ci && \
-	npm run build
-
-build_vue_icons_package: ## Build custom vue icons package
-	@echo "[i] Building custom Vue icons package..."
-	cd custom-npms/nc-vue-material-design-icons && \
-	npm ci && \
-	npm run build
-
-build_nextcloud_vue: ## Build custom nextcloud vue
-	@echo "[i] Building custom Nextcloud Vue package..."
-	cd custom-npms/nc-nextcloud-vue && \
-	npm ci && \
-	npm run build
-
-build_custom_npms: .remove_node_modules build_mdi_svg build_mdi_js build_vue_icons_package build_nextcloud_vue ## Build all custom npm packages
-	@echo "[i] Custom npm packages built"
-
 build_nextcloud_only:  ## Build HiDrive Next only (no custom npm packages rebuild)
 	set -e && \
 	composer install --no-dev -o && \
@@ -89,10 +45,10 @@ build_nextcloud_dev:  ## Build HiDrive Next only (no custom npm packages rebuild
 	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
 
-build_nextcloud: build_custom_npms build_nextcloud_only ## Build HiDrive Next (rebuild custom npm packages)
+build_nextcloud: build_nextcloud_only ## Build HiDrive Next
 	@echo "[i] HiDrive Next built"
 
-dev_nextcloud: build_custom_npms build_nextcloud_dev ## Build HiDrive Next (rebuild custom npm packages)
+dev_nextcloud: build_nextcloud_dev ## Build HiDrive Next for development
 	@echo "[i] HiDrive Next built"
 
 build_dep_simplesettings_app: ## Install and build simplesettings app
