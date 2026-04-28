@@ -4,59 +4,18 @@
 # Build configuration
 TARGET_PACKAGE_NAME = hidrivenext-server.zip
 
-# Common build commands
-COMPOSER_INSTALL = composer install --no-dev -o --no-interaction
-NPM_INSTALL      = npm ci --prefer-offline --no-audit
-NPM_BUILD        = npm run build
-
-# App category lists — drive .build_deps and generate_apps_matrix_json
-# apps-custom/ — npm only (no composer)
-CUSTOM_NPM_APPS = simplesettings
-# apps-custom/ — composer only (no npm, even if package.json present)
-CUSTOM_COMPOSER_APPS = nc_ionos_processes
-# apps-external/ — full build (composer + npm)
-EXTERNAL_FULL_APPS = richdocuments user_oidc viewer
-# Apps with special build targets (not in the standard categories above)
-# These apps have dedicated build_<app>_app targets with custom build logic
-SPECIAL_BUILD_APPS = nc_theming nc-ionos-theme
-
-# Metadata for generate_apps_matrix_json: "name|path|has_npm|has_composer"
-# One entry per app in SPECIAL_BUILD_APPS — must be kept in sync.
-SPECIAL_BUILD_APPS_META = \
-	"nc_theming|apps-custom/nc_theming|false|true" \
-	"nc-ionos-theme|themes/nc-ionos-theme|true|false"
-
-# App folders to add to shipped.json (makes apps non-removable)
-# Add additional app folders here to include them in the shipped apps list
-APP_FOLDERS_TO_SHIP = \
-	apps-external \
-	apps-custom
-
-# Apps to be removed from final package (read from removed-apps.txt)
-REMOVE_UNWANTED_APPS = $(shell [ -f IONOS/removed-apps.txt ] && sed '/^#/d;/^$$/d;s/^/apps\//' IONOS/removed-apps.txt || echo "")
-
-# Generate build target lists dynamically from category lists
-CUSTOM_NPM_TARGETS      = $(patsubst %,build_%_app,$(CUSTOM_NPM_APPS))
-CUSTOM_COMPOSER_TARGETS = $(patsubst %,build_%_app,$(CUSTOM_COMPOSER_APPS))
-EXTERNAL_FULL_TARGETS   = $(patsubst %,build_%_app,$(EXTERNAL_FULL_APPS))
-SPECIAL_BUILD_TARGETS   = $(patsubst %,build_%_app,$(SPECIAL_BUILD_APPS))
-
 # Core build targets
-.PHONY: help clean .precheck
+.PHONY: help clean .remove_node_modules
 # Main Nextcloud build
-.PHONY: build_nextcloud build_nextcloud_only build_nextcloud_dev dev_nextcloud
-# Applications — dynamically derived from category lists
-.PHONY: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
+.PHONY: build_nextcloud
+# Applications
+.PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app
+# Themes
+.PHONY: build_dep_ionos_theme
 # Configuration and packaging
 .PHONY: add_config_partials patch_shipped_json version.json zip_dependencies
 # Meta targets
 .PHONY: .build_deps build_release build_locally
-# Pipeline targets for CI workflow
-.PHONY: build_after_external_apps package_after_build
-# CI matrix generation
-.PHONY: generate_apps_matrix_json
-# Validation targets
-.PHONY: validate_app_list_uniqueness validate_external_apps validate_all
 
 # HELP
 # This will output the help for each task
@@ -67,86 +26,28 @@ help: ## This help.
 	@echo "Usage: make [target]"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@echo ""
-	@echo "Individual app build targets:"
-	@for app in $(CUSTOM_NPM_APPS);      do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-custom npm"; done
-	@for app in $(CUSTOM_COMPOSER_APPS); do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-custom composer"; done
-	@for app in $(EXTERNAL_FULL_APPS);   do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-external composer+npm"; done
-	@for app in $(SPECIAL_BUILD_APPS);   do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "special"; done
 
-.precheck:
-	@{ \
-		if [ ! -d "apps-external" ] || [ ! -d "apps-custom" ]; then \
-			echo ""; \
-			echo "**********************************************************************"; \
-			echo "ERROR: apps-external/ or apps-custom/ not found!"; \
-			echo ""; \
-			echo "Run this Makefile from the Nextcloud project root:"; \
-			echo "  make -f IONOS/Makefile <target>"; \
-			echo "**********************************************************************"; \
-			echo ""; \
-			exit 1; \
-		fi; \
-		if ! test -f "version.php" || ! test -d "lib" || ! test -d "core"; then \
-			echo ""; \
-			echo "**********************************************************************"; \
-			echo "ERROR: Not a valid Nextcloud project directory."; \
-			echo ""; \
-			echo "Run this Makefile from the Nextcloud project root:"; \
-			echo "  make -f IONOS/Makefile <target>"; \
-			echo "**********************************************************************"; \
-			echo ""; \
-			exit 1; \
-		fi; \
-		if ! command -v jq >/dev/null 2>&1; then \
-			echo ""; \
-			echo "**********************************************************************"; \
-			echo "ERROR: jq is not installed!"; \
-			echo ""; \
-			echo "Please install jq:"; \
-			echo "  Ubuntu/Debian: sudo apt-get install jq"; \
-			echo "  macOS: brew install jq"; \
-			echo "  Other: https://jqlang.github.io/jq/download/"; \
-			echo "**********************************************************************"; \
-			echo ""; \
-			exit 1; \
-		fi; \
-	} >&2
-
-clean: ## Clean up build artifacts
-	@echo "[i] Cleaning build artifacts..."
+.remove_node_modules: ## Remove node_modules
 	rm -rf node_modules
 	rm -f version.json
 	rm -f .buildnumber
 	rm -f $(TARGET_PACKAGE_NAME)
 	@echo "[✓] Clean completed"
 
-build_nextcloud_only: ## Build HiDrive Next only (no custom npm packages rebuild)
-	set -e && \
-	$(COMPOSER_INSTALL) && \
-	$(NPM_INSTALL) && \
-	NODE_OPTIONS="--max-old-space-size=4096" $(NPM_BUILD)
-	@echo "[✓] HiDrive Next core built successfully"
 
-build_nextcloud_dev: ## Build HiDrive Next dev (no custom npm packages rebuild)
+build_nextcloud:  ## Build HiDrive Next for production
 	set -e && \
-	$(COMPOSER_INSTALL) && \
-	$(NPM_INSTALL) && \
+	composer install --no-dev -o && \
+	npm ci && \
+	NODE_OPTIONS="--max-old-space-size=4096" npm run build
+	@echo "[i] HiDrive Next built"
+
+build_nextcloud_dev:  ## Build HiDrive Next only for development
+	set -e && \
+	composer install --no-dev -o && \
+	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
-	@echo "[✓] HiDrive Next core (dev) built successfully"
-
-build_nextcloud: build_nextcloud_only ## Build HiDrive Next
-	@echo "[i] HiDrive Next built"
-
-dev_nextcloud: build_nextcloud_dev ## Build HiDrive Next dev
-	@echo "[i] HiDrive Next built"
-
-# Common macros for standard build categories
-define build_custom_npm_app
-	@echo "[i] Building $(1) app..."
-	@cd apps-custom/$(1) && $(NPM_INSTALL) && $(NPM_BUILD)
-	@echo "[✓] $(1) app built successfully"
-endef
+	@echo "[i] HiDrive Next built for dev"
 
 define build_custom_composer_app
 	@echo "[i] Building $(1) app..."
