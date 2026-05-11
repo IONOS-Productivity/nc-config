@@ -53,6 +53,8 @@ SPECIAL_BUILD_TARGETS   = $(patsubst %,build_%_app,$(SPECIAL_BUILD_APPS))
 .PHONY: add_config_partials patch_shipped_json version.json zip_dependencies
 # Meta targets
 .PHONY: .build_deps build_release build_locally
+# Pipeline targets for CI workflow
+.PHONY: build_after_external_apps package_after_build
 # CI matrix generation
 .PHONY: generate_apps_matrix_json
 
@@ -278,6 +280,12 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	$(foreach app,$(REMOVE_UNWANTED_APPS),-x "$(app)/*")
 
 .build_deps: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
+
+build_after_external_apps: build_nextcloud add_config_partials ## Build HiDrive Next and add configs after external apps are done
+	@echo "[i] HiDrive Next built and config files added"
+
+package_after_build: zip_dependencies ## Create package after build is complete
+	@echo "[i] Package created successfully"
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	@echo "[i] Everything done for a release"
