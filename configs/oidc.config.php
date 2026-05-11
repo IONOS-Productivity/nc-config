@@ -24,10 +24,11 @@ $CONFIG = [
 		//
 		// https://github.com/nextcloud/user_oidc?tab=readme-ov-file#soft-auto-provisioning-without-user-creation
 		'disable_account_creation' => true,
+		// IONOS access tokens carry aud=ionos.com, not per-client values;
+		// audience check must be off (permanent)
 		'selfencoded_bearer_validation_audience_check' => false,
-		// TEMPORARY — remove once IdP ticket CISOLOGIN-902 lands (adds
-		// https://easynextcloud.ionos.com/claims/userId to JWT access tokens).
-		// Tracking: HDNEXT-1719.
+		// Enable UserInfo fallback for mappingUid claim resolution
+		// (IONOS access tokens lack the claim; permanent per AD-7, CISOLOGIN-902)
 		'userinfo_bearer_validation' => true,
 	],
 ];
