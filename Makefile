@@ -34,6 +34,9 @@ APP_FOLDERS_TO_SHIP = \
 	apps-external \
 	apps-custom
 
+# Apps to be removed from final package (read from removed-apps.txt)
+REMOVE_UNWANTED_APPS = $(shell [ -f IONOS/removed-apps.txt ] && sed '/^#/d;/^$$/d;s/^/apps\//' IONOS/removed-apps.txt || echo "")
+
 # Generate build target lists dynamically from category lists
 CUSTOM_NPM_TARGETS      = $(patsubst %,build_%_app,$(CUSTOM_NPM_APPS))
 CUSTOM_COMPOSER_TARGETS = $(patsubst %,build_%_app,$(CUSTOM_COMPOSER_APPS))
@@ -271,7 +274,8 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "package.json" \
 	-x "package-lock.json" \
 	-x "themes/nc-ionos-theme/README.md" \
-	-x "themes/nc-ionos-theme/IONOS**"
+	-x "themes/nc-ionos-theme/IONOS**" \
+	$(foreach app,$(REMOVE_UNWANTED_APPS),-x "$(app)/*")
 
 .build_deps: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
 
