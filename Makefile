@@ -6,18 +6,28 @@
 # Build configuration
 TARGET_PACKAGE_NAME = hidrivenext-server.zip
 
+# App category lists — drive .build_deps and generate_apps_matrix_json
+# apps-custom/ — npm only (no composer)
+CUSTOM_NPM_APPS = simplesettings
+# apps-custom/ — composer only (no npm, even if package.json present)
+CUSTOM_COMPOSER_APPS = nc_ionos_processes nc_theming
+# apps-external/ — full build (composer + npm)
+EXTERNAL_FULL_APPS = richdocuments user_oidc viewer
+# themes/ — npm only; lock file lives under ${path}/IONOS/
+THEME_APPS = nc-ionos-theme
+
 # Core build targets
 .PHONY: help clean
 # Main Nextcloud build
 .PHONY: build_nextcloud build_nextcloud_only
-# Applications
-.PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app
-# Themes
-.PHONY: build_dep_ionos_theme
+# Applications and themes — dynamically derived from category lists
+.PHONY: $(patsubst %,build_%_app,$(CUSTOM_NPM_APPS) $(CUSTOM_COMPOSER_APPS) $(EXTERNAL_FULL_APPS) $(THEME_APPS))
 # Configuration and packaging
 .PHONY: add_config_partials patch_shipped_json version.json zip_dependencies
 # Meta targets
 .PHONY: .build_deps build_release build_locally
+# CI matrix generation
+.PHONY: generate_apps_matrix_json
 
 # HELP
 # This will output the help for each task
@@ -53,22 +63,22 @@ build_nextcloud: build_nextcloud_only ## Build HiDrive Next
 dev_nextcloud: build_nextcloud_dev ## Build HiDrive Next (dev)
 	@echo "[i] HiDrive Next built"
 
-build_dep_simplesettings_app: ## Install and build simplesettings app
+build_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
 	npm ci && \
 	npm run build
 
-build_dep_nc_ionos_processes_app: ## Install nc_ionos_processes app
+build_nc_ionos_processes_app: ## Install nc_ionos_processes app
 	cd apps-custom/nc_ionos_processes && \
 	composer install --no-dev -o
 
-build_dep_user_oidc_app: ## Install and build user_oidc app
+build_user_oidc_app: ## Install and build user_oidc app
 	cd apps-external/user_oidc && \
 	composer install --no-dev -o && \
 	npm ci && \
 	npm run build
 
-build_dep_viewer_app: ## Install and build viewer app
+build_viewer_app: ## Install and build viewer app
 	cd apps-external/viewer && \
 	composer install --no-dev -o && \
 	npm ci && \
@@ -80,12 +90,12 @@ build_richdocuments_app: ## Install and build richdocuments viewer app
 	npm ci && \
 	npm run build
 
-build_dep_ionos_theme: ## Install and build ionos theme
+build_nc-ionos-theme_app: ## Install and build ionos theme
 	cd themes/nc-ionos-theme/IONOS && \
 	npm ci && \
 	npm run build
 
-build_dep_theming_app: ## Build the custom css
+build_nc_theming_app: ## Build the custom css
 	cd apps-custom/nc_theming && \
 	make build_css
 
@@ -167,10 +177,31 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-.build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
+.build_deps: $(patsubst %,build_%_app,$(CUSTOM_NPM_APPS) $(CUSTOM_COMPOSER_APPS) $(EXTERNAL_FULL_APPS) $(THEME_APPS))
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	@echo "[i] Everything done for a release"
 
 build_locally: dev_nextcloud .build_deps ## Build all apps/themes for local development
 	@echo "[i] Everything done for local/dev"
+
+generate_apps_matrix_json: ## Generate JSON matrix of buildable apps for the CI pipeline
+	@bash -c ' \
+	emit() { \
+		local app="$$1" path="$$2" has_npm="$$3" has_composer="$$4"; \
+		local npm_lock_path=""; \
+		if [ "$$has_npm" = "true" ]; then \
+			if [ -f "$$path/IONOS/package-lock.json" ]; then \
+				npm_lock_path="$$path/IONOS/package-lock.json"; \
+			else \
+				npm_lock_path="$$path/package-lock.json"; \
+			fi; \
+		fi; \
+		printf "{\"name\":\"%s\",\"path\":\"%s\",\"has_npm\":%s,\"has_composer\":%s,\"npm_lock_path\":\"%s\",\"makefile_target\":\"build_%s_app\",\"needs_custom_npms\":false}\n" \
+			"$$app" "$$path" "$$has_npm" "$$has_composer" "$$npm_lock_path" "$$app"; \
+	}; \
+	for app in $(CUSTOM_NPM_APPS);      do emit "$$app" "apps-custom/$$app"   true  false; done; \
+	for app in $(CUSTOM_COMPOSER_APPS); do emit "$$app" "apps-custom/$$app"   false true;  done; \
+	for app in $(EXTERNAL_FULL_APPS);   do emit "$$app" "apps-external/$$app" true  true;  done; \
+	for app in $(THEME_APPS);           do emit "$$app" "themes/$$app"        true  false; done \
+	' | jq -s 'sort_by(.name)'
