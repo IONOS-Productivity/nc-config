@@ -57,6 +57,8 @@ SPECIAL_BUILD_TARGETS   = $(patsubst %,build_%_app,$(SPECIAL_BUILD_APPS))
 .PHONY: build_after_external_apps package_after_build
 # CI matrix generation
 .PHONY: generate_apps_matrix_json
+# Validation targets
+.PHONY: validate_app_list_uniqueness validate_external_apps validate_all
 
 # HELP
 # This will output the help for each task
@@ -278,6 +280,7 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**" \
 	$(foreach app,$(REMOVE_UNWANTED_APPS),-x "$(app)/*")
+	@echo "[i] Package $(TARGET_PACKAGE_NAME) created successfully"
 
 .build_deps: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
 
@@ -292,6 +295,27 @@ build_release: build_nextcloud .build_deps add_config_partials zip_dependencies 
 
 build_locally: dev_nextcloud .build_deps ## Build all apps/themes for local development
 	@echo "[i] Everything done for local/dev"
+
+validate_app_list_uniqueness: .precheck ## Validate that apps are only in one list and not duplicated by hardcoded targets
+	@IONOS/scripts/validate_app_list_uniqueness.sh \
+		"$(CUSTOM_NPM_APPS)" \
+		"$(CUSTOM_COMPOSER_APPS)" \
+		"$(EXTERNAL_FULL_APPS)" \
+		"$(SPECIAL_BUILD_APPS)" \
+		"$(MAKEFILE_LIST)"
+
+validate_external_apps: .precheck ## Validate and suggest proper categorization for apps-custom/ and apps-external/
+	@IONOS/scripts/validate_external_apps.sh \
+		"$(CUSTOM_NPM_APPS)" \
+		"$(CUSTOM_COMPOSER_APPS)" \
+		"$(EXTERNAL_FULL_APPS)" \
+		"$(SPECIAL_BUILD_APPS)"
+
+validate_all: .precheck ## Run all validation tasks
+	@echo "[i] Running validation..."
+	@$(MAKE) -f IONOS/Makefile validate_app_list_uniqueness
+	@$(MAKE) -f IONOS/Makefile validate_external_apps
+	@echo "[✓] Validation completed successfully"
 
 generate_apps_matrix_json: .precheck ## Generate JSON matrix of buildable apps for the CI pipeline
 	@bash -c ' \
