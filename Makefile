@@ -35,7 +35,7 @@ EXTERNAL_FULL_TARGETS   = $(patsubst %,build_%_app,$(EXTERNAL_FULL_APPS))
 SPECIAL_BUILD_TARGETS   = $(patsubst %,build_%_app,$(SPECIAL_BUILD_APPS))
 
 # Core build targets
-.PHONY: help clean
+.PHONY: help clean .precheck
 # Main Nextcloud build
 .PHONY: build_nextcloud build_nextcloud_only build_nextcloud_dev dev_nextcloud
 # Applications — dynamically derived from category lists
@@ -63,11 +63,52 @@ help: ## This help.
 	@for app in $(EXTERNAL_FULL_APPS);   do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-external composer+npm"; done
 	@for app in $(SPECIAL_BUILD_APPS);   do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "special"; done
 
+.precheck:
+	@{ \
+		if [ ! -d "apps-external" ] || [ ! -d "apps-custom" ]; then \
+			echo ""; \
+			echo "**********************************************************************"; \
+			echo "ERROR: apps-external/ or apps-custom/ not found!"; \
+			echo ""; \
+			echo "Run this Makefile from the Nextcloud project root:"; \
+			echo "  make -f IONOS/Makefile <target>"; \
+			echo "**********************************************************************"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+		if ! test -f "version.php" || ! test -d "lib" || ! test -d "core"; then \
+			echo ""; \
+			echo "**********************************************************************"; \
+			echo "ERROR: Not a valid Nextcloud project directory."; \
+			echo ""; \
+			echo "Run this Makefile from the Nextcloud project root:"; \
+			echo "  make -f IONOS/Makefile <target>"; \
+			echo "**********************************************************************"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+		if ! command -v jq >/dev/null 2>&1; then \
+			echo ""; \
+			echo "**********************************************************************"; \
+			echo "ERROR: jq is not installed!"; \
+			echo ""; \
+			echo "Please install jq:"; \
+			echo "  Ubuntu/Debian: sudo apt-get install jq"; \
+			echo "  macOS: brew install jq"; \
+			echo "  Other: https://jqlang.github.io/jq/download/"; \
+			echo "**********************************************************************"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+	} >&2
+
 clean: ## Clean up build artifacts
 	@echo "[i] Cleaning build artifacts..."
 	rm -rf node_modules
 	rm -f version.json
+	rm -f .buildnumber
 	rm -f $(TARGET_PACKAGE_NAME)
+	@echo "[✓] Clean completed"
 
 build_nextcloud_only: ## Build HiDrive Next only (no custom npm packages rebuild)
 	set -e && \
@@ -133,16 +174,16 @@ build_nc-ionos-theme_app: ## Install and build ionos theme
 	$(NPM_BUILD)
 	@echo "[✓] nc-ionos-theme app built successfully"
 
-add_config_partials: ## Copy custom config files to Nextcloud config
+add_config_partials: .precheck ## Copy custom config files to Nextcloud config
 	@echo "[i] Copying config files..."
 	cp IONOS/configs/*.config.php config/
 	@echo "[✓] Config files copied successfully"
 
-patch_shipped_json: ## Patch shipped.json to make core apps disableable
+patch_shipped_json: .precheck ## Patch shipped.json to make core apps disableable
 	@echo "[i] Patching shipped.json..."
 	IONOS/apps-disable.sh
 
-version.json: ## Generate version file
+version.json: .precheck ## Generate version file
 	@echo "[i] Generating version.json..."
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
@@ -229,7 +270,7 @@ build_release: build_nextcloud .build_deps add_config_partials zip_dependencies 
 build_locally: dev_nextcloud .build_deps ## Build all apps/themes for local development
 	@echo "[i] Everything done for local/dev"
 
-generate_apps_matrix_json: ## Generate JSON matrix of buildable apps for the CI pipeline
+generate_apps_matrix_json: .precheck ## Generate JSON matrix of buildable apps for the CI pipeline
 	@bash -c ' \
 	emit() { \
 		local app="$$1" path="$$2" has_npm="$$3" has_composer="$$4"; \
