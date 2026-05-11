@@ -24,5 +24,10 @@ $CONFIG = [
 		//
 		// https://github.com/nextcloud/user_oidc?tab=readme-ov-file#soft-auto-provisioning-without-user-creation
 		'disable_account_creation' => true,
+		'selfencoded_bearer_validation_audience_check' => false,
+		// TEMPORARY — remove once IdP ticket CISOLOGIN-902 lands (adds
+		// https://easynextcloud.ionos.com/claims/userId to JWT access tokens).
+		// Tracking: HDNEXT-1719.
+        'userinfo_bearer_validation' => true,
 	],
 ];
