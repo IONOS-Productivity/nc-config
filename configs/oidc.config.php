@@ -28,6 +28,6 @@ $CONFIG = [
 		// TEMPORARY — remove once IdP ticket CISOLOGIN-902 lands (adds
 		// https://easynextcloud.ionos.com/claims/userId to JWT access tokens).
 		// Tracking: HDNEXT-1719.
-        'userinfo_bearer_validation' => true,
+		'userinfo_bearer_validation' => true,
 	],
 ];
