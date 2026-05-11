@@ -28,6 +28,12 @@ SPECIAL_BUILD_APPS_META = \
 	"nc_theming|apps-custom/nc_theming|false|true" \
 	"nc-ionos-theme|themes/nc-ionos-theme|true|false"
 
+# App folders to add to shipped.json (makes apps non-removable)
+# Add additional app folders here to include them in the shipped apps list
+APP_FOLDERS_TO_SHIP = \
+	apps-external \
+	apps-custom
+
 # Generate build target lists dynamically from category lists
 CUSTOM_NPM_TARGETS      = $(patsubst %,build_%_app,$(CUSTOM_NPM_APPS))
 CUSTOM_COMPOSER_TARGETS = $(patsubst %,build_%_app,$(CUSTOM_COMPOSER_APPS))
@@ -179,8 +185,13 @@ add_config_partials: .precheck ## Copy custom config files to Nextcloud config
 	cp IONOS/configs/*.config.php config/
 	@echo "[✓] Config files copied successfully"
 
-patch_shipped_json: .precheck ## Patch shipped.json to make core apps disableable
+patch_shipped_json: .precheck ## Patch shipped.json
 	@echo "[i] Patching shipped.json..."
+
+	@echo "[i] Making external apps non-removable (hiding remove buttons)..."
+	IONOS/scripts/patch_shipped_json_add_shipped_apps.sh $(APP_FOLDERS_TO_SHIP)
+
+	@echo "[i] Making core apps disableable and enforcing always-enabled apps..."
 	IONOS/apps-disable.sh
 
 version.json: .precheck ## Generate version file
