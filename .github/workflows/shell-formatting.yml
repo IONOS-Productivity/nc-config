@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Shell Script Formatting Check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shell-formatting-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check-shell-formatting:
+    runs-on: ubuntu-latest
+    name: Validate shell script formatting
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install editorconfig-checker
+        uses: editorconfig-checker/action-editorconfig-checker@d2ed4fd072ae6f887e9407c909af0f585d2ad9f4 # v2
+        with:
+          version: "v3.6.1"
+
+      - name: Check formatting
+        run: editorconfig-checker
+
+      - name: Show EditorConfig violations for shell files
+        if: failure()
+        run: |
+          echo "❌ EditorConfig violations found in shell files"
+          echo "Expected formatting rules from .editorconfig:"
+          echo "  - charset: utf-8"
+          echo "  - end_of_line: lf"
+          echo "  - indent_size: 2"
+          echo "  - indent_style: tab"
+          echo "  - insert_final_newline: true"
+          echo "  - tab_width: 4"
+          echo ""
+          echo "Please fix the formatting issues in the shell files."
