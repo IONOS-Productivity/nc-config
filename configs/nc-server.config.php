@@ -6,5 +6,6 @@
  */
 
 $CONFIG = [
-	'theme' => 'nc-ionos-theme',
+	// Disable custom lookup server to publish user data
+	'lookup_server' => '',
 ];

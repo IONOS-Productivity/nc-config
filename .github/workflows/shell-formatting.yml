@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: EditorConfig Formatting Check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shell-formatting-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check-shell-formatting:
+    runs-on: ubuntu-latest
+    name: Validate repository formatting
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install editorconfig-checker
+        uses: editorconfig-checker/action-editorconfig-checker@d2ed4fd072ae6f887e9407c909af0f585d2ad9f4 # v2
+        with:
+          version: "v3.6.1"
+
+      - name: Check formatting
+        run: editorconfig-checker
+
+      - name: Show EditorConfig violations
+        if: failure()
+        run: |
+          echo "❌ EditorConfig violations found"
+          echo "Please review and fix formatting based on the matching section(s) in .editorconfig."

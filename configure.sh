@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 #===============================================================================
 # HiDrive Next Configuration Script
@@ -6,12 +8,12 @@
 # This script configures a HiDrive Next instance with IONOS-specific settings.
 #
 # Features:
-# - Server basic configuration (lookup server, admin email, search providers)
+# - Server basic configuration (admin email, search providers)
 # - Theming and branding setup for IONOS HiDrive Next
 # - App configuration (viewer, sharing, files, DAV)
 # - Integration setup (IONOS processes, serverinfo, Collabora)
 # - Selective app disabling based on configuration
-# - Configuration partials for app paths
+# - Runtime-safe OCC configuration (system settings like lookup_server are provided via config partials)
 #
 # Environment Variables:
 # - ADMIN_USERNAME: Admin username (default: admin)
@@ -111,7 +113,6 @@ verify_nextcloud_installation() {
 configure_server_basics() {
 	log_info "Configuring HiDrive Next server basics..."
 
-	execute_occ_command config:system:set lookup_server --value=""
 	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
 	# array of providers to be used for unified search
 	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
@@ -288,39 +289,6 @@ disable_configured_apps() {
 }
 
 #===============================================================================
-# Configuration Setup Functions
-#===============================================================================
-
-# Add HiDrive Next configuration partials for app paths
-# Usage: setup_config_partials
-setup_config_partials() {
-	log_info "Setting up configuration partials..."
-
-	cat >"${SCRIPT_DIR}/../config/app-paths.config.php" <<-'EOF'
-		<?php
-		$CONFIG = [
-		  'apps_paths' => [
-		    [
-		      'path' => '/var/www/html/apps',
-		      'url' => '/apps',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-custom',
-		      'url' => '/apps-custom',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-external',
-		      'url' => '/apps-external',
-		      'writable' => true,
-		    ],
-		  ],
-		];
-	EOF
-}
-
-#===============================================================================
 # Main Execution Function
 #===============================================================================
 
@@ -334,7 +302,6 @@ main() {
 	verify_nextcloud_installation
 
 	# Execute configuration steps
-	setup_config_partials
 	configure_server_basics
 	config_apps
 	configure_theming

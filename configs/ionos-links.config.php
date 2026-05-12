@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * SPDX-FileCopyrightText: 2025 STRATO GmbH
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 $CONFIG = [
 	'ionos_peer_products' => [
 		'ionos_webmail_target_link' => 'https://email.ionos.fr/',
