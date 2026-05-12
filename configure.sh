@@ -289,39 +289,6 @@ disable_configured_apps() {
 }
 
 #===============================================================================
-# Configuration Setup Functions
-#===============================================================================
-
-# Add HiDrive Next configuration partials for app paths
-# Usage: setup_config_partials
-setup_config_partials() {
-	log_info "Setting up configuration partials..."
-
-	cat >"${SCRIPT_DIR}/../config/app-paths.config.php" <<-'EOF'
-		<?php
-		$CONFIG = [
-		  'apps_paths' => [
-		    [
-		      'path' => '/var/www/html/apps',
-		      'url' => '/apps',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-custom',
-		      'url' => '/apps-custom',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-external',
-		      'url' => '/apps-external',
-		      'writable' => true,
-		    ],
-		  ],
-		];
-	EOF
-}
-
-#===============================================================================
 # Main Execution Function
 #===============================================================================
 
@@ -335,7 +302,6 @@ main() {
 	verify_nextcloud_installation
 
 	# Execute configuration steps
-	setup_config_partials
 	configure_server_basics
 	config_apps
 	configure_theming
