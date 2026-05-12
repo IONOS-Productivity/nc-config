@@ -17,27 +17,29 @@ write_config_file() {
 	config="${NEXTCLOUD_ROOT_DIR}/config/object-store.config.php"
 
 	# Note: backslashes require double escaping due to shell (\\ -> \\\\)
-	cat >${config} <<-EOF
-		<?php
-		\$CONFIG = [
-		  // https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/primary_storage.html
-		  'objectstore' => [
-		    'class' => '\\\\OC\\\\Files\\\\ObjectStore\\\\S3',
-		    'arguments' => [
-		      'autocreate' => false,
-		      'bucket' => '${ENC_OBJECT_STORAGE_BUCKET_NAME}',
-		      'region' => '${ENC_OBJECT_STORAGE_REGION}',
-		      'hostname' => '${ENC_OBJECT_STORAGE_HOSTNAME}',
-		      'port' => ${ENC_OBJECT_STORAGE_PORT},
-		      'use_ssl' => ${use_ssl_value},
-		      'key' => '${ENC_OBJECT_STORAGE_ACCESS_KEY}',
-		      'secret' => '${ENC_OBJECT_STORAGE_SECRET}',
-		      'objectPrefix' => 'urn:oid:',
-		      'use_path_style' => ${use_path_style_value},
-		    ],
-		  ],
-		];
-	EOF
+	# Heredoc body is at column 0 and uses tabs for PHP indentation to keep
+	# editorconfig-checker happy (the dash-form <<-EOF would strip those tabs).
+	cat >"${config}" <<EOF
+<?php
+\$CONFIG = [
+	// https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/primary_storage.html
+	'objectstore' => [
+		'class' => '\\\\OC\\\\Files\\\\ObjectStore\\\\S3',
+		'arguments' => [
+			'autocreate' => false,
+			'bucket' => '${ENC_OBJECT_STORAGE_BUCKET_NAME}',
+			'region' => '${ENC_OBJECT_STORAGE_REGION}',
+			'hostname' => '${ENC_OBJECT_STORAGE_HOSTNAME}',
+			'port' => ${ENC_OBJECT_STORAGE_PORT},
+			'use_ssl' => ${use_ssl_value},
+			'key' => '${ENC_OBJECT_STORAGE_ACCESS_KEY}',
+			'secret' => '${ENC_OBJECT_STORAGE_SECRET}',
+			'objectPrefix' => 'urn:oid:',
+			'use_path_style' => ${use_path_style_value},
+		],
+	],
+];
+EOF
 }
 
 main() {
