@@ -1,4 +1,6 @@
 # SPDX-FileCopyrightText: 2024 Kai Henseler <kai.henseler@strato.de>
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+#
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Build configuration
