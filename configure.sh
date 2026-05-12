@@ -8,12 +8,12 @@
 # This script configures a HiDrive Next instance with IONOS-specific settings.
 #
 # Features:
-# - Server basic configuration (lookup server, admin email, search providers)
+# - Server basic configuration (admin email, search providers)
 # - Theming and branding setup for IONOS HiDrive Next
 # - App configuration (viewer, sharing, files, DAV)
 # - Integration setup (IONOS processes, serverinfo, Collabora)
 # - Selective app disabling based on configuration
-# - Configuration partials for app paths
+# - Runtime-safe OCC configuration (system settings like lookup_server are provided via config partials)
 #
 # Environment Variables:
 # - ADMIN_USERNAME: Admin username (default: admin)
