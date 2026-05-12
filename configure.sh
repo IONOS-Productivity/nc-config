@@ -111,7 +111,6 @@ verify_nextcloud_installation() {
 configure_server_basics() {
 	log_info "Configuring HiDrive Next server basics..."
 
-	execute_occ_command config:system:set lookup_server --value=""
 	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
 	# array of providers to be used for unified search
 	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
