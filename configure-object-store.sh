@@ -1,5 +1,9 @@
 #!/usr/bin/env sh
 
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 NEXTCLOUD_ROOT_DIR="/var/www/html"
 
 # Log fatal error message and exit with failure code

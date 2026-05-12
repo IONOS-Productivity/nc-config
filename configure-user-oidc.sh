@@ -1,5 +1,9 @@
 #!/usr/bin/env sh
 
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Log fatal error message and exit with failure code
 # Usage: log_fatal <message>
 log_fatal() {
