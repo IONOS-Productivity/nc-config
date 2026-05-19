@@ -1,31 +1,32 @@
 # SPDX-FileCopyrightText: 2026 IONOS Productivity
 # SPDX-License-Identifier: MIT
 #
-# This workflow automates submodule updates in nc-server when commits are pushed to main.
+# This workflow automates submodule updates in nc-server when commits are pushed to the submodule repo's default branch.
 #
 # How it works:
-# 1. Triggers when a commit is pushed to main in the submodule repo
+# 1. Triggers when a commit is pushed to the submodule repo's default branch
 # 2. Creates a pre-release in the submodule repository
 # 3. Creates update branch from BASE_BRANCH (ionos-dev)
 # 4. Creates PR to merge into BASE_BRANCH
 #
 # To adapt for other submodules:
 # 1. Copy this workflow file to the submodule repository's .github/workflows/
-# 2. Update the 'if' condition in create-submodule-pr job
-# 3. Update the env variables in create-submodule-pr job:
+# 2. Update the 'on.push.branches' value to match the submodule repo's default branch (e.g., main or master)
+# 3. Update the 'if' condition in create-submodule-pr job
+# 4. Update the env variables in create-submodule-pr job:
 #    - SUBMODULE_NAME: Directory name in nc-server (e.g., "IONOS")
 #    - SUBMODULE_REPO: Full repository name (e.g., "IONOS-Productivity/nc-config")
 #    - TARGET_REPO: Where the submodule lives (typically "IONOS-Productivity/nc-server")
 #    - BASE_BRANCH: Default target branch (typically "ionos-dev")
 #    - COMMIT_PREFIX: Commit message prefix (e.g., "IONOS(config)")
-# 4. Ensure NCW_SERVER_PAT secret is configured in the submodule repository
+# 5. Ensure NCW_SERVER_PAT secret is configured in the submodule repository
 #
 name: Create pre-release and update nc-server submodule
 
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -160,7 +161,7 @@ jobs:
 
           # Update the submodule to the new commit
           cd "${{ env.SUBMODULE_NAME }}"
-          git fetch origin main
+          git fetch origin master
           git checkout ${{ needs.create-prerelease.outputs.sha }}
 
           # Get the commit message for description
@@ -213,7 +214,7 @@ jobs:
           if [ -n "$SOURCE_MILESTONE" ]; then
             PR_BODY="$PR_BODY"$'\n\n'"**Milestone:** $SOURCE_MILESTONE"
           fi
-          PR_BODY="$PR_BODY"$'\n\n'"---"$'\n'"Auto-generated PR from ${{ env.SUBMODULE_NAME }} repository push to main branch."
+          PR_BODY="$PR_BODY"$'\n\n'"---"$'\n'"Auto-generated PR from ${{ env.SUBMODULE_NAME }} repository push to master branch."
 
           # Check if a PR already exists for this branch
           EXISTING_PR_DATA=$(gh pr list \
