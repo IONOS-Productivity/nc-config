@@ -24,6 +24,67 @@ checks() {
 	fi
 }
 
+log_warning() {
+	printf "\033[1;33mWarning: %s\033[0m\n" "${*}"
+}
+
+set_market_links() {
+	echo "Configure market-specific links for MARKET=${MARKET}"
+
+	case "${MARKET}" in
+		FR)
+			IONOS_WEBMAIL_TARGET_LINK="https://email.ionos.fr/"
+			IONOS_HELP_TARGET_LINK="https://wl.hidrive.com/easy/0027"
+			IONOS_CUSTOMCLIENT_ANDROID="https://wl.hidrive.com/easy/0022"
+			IONOS_CUSTOMCLIENT_IOS="https://wl.hidrive.com/easy/0021"
+			IONOS_HOMEPAGE="https://ionos.fr/"
+			;;
+		DE)
+			IONOS_WEBMAIL_TARGET_LINK="https://email.ionos.de/"
+			IONOS_HELP_TARGET_LINK="https://wl.hidrive.com/easy/0047"
+			IONOS_CUSTOMCLIENT_ANDROID="https://wl.hidrive.com/easy/0002"
+			IONOS_CUSTOMCLIENT_IOS="https://wl.hidrive.com/easy/0001"
+			IONOS_HOMEPAGE="https://ionos.de/"
+			;;
+		ES)
+			IONOS_WEBMAIL_TARGET_LINK="https://email.ionos.es/"
+			IONOS_HELP_TARGET_LINK="https://wl.hidrive.com/easy/0017"
+			IONOS_CUSTOMCLIENT_ANDROID="https://wl.hidrive.com/easy/0032"
+			IONOS_CUSTOMCLIENT_IOS="https://wl.hidrive.com/easy/0031"
+			IONOS_HOMEPAGE="https://ionos.es/"
+			;;
+		UK)
+			IONOS_WEBMAIL_TARGET_LINK="https://email.ionos.co.uk/"
+			IONOS_HELP_TARGET_LINK="https://wl.hidrive.com/easy/0007"
+			IONOS_CUSTOMCLIENT_ANDROID="https://wl.hidrive.com/easy/0012"
+			IONOS_CUSTOMCLIENT_IOS="https://wl.hidrive.com/easy/0011"
+			IONOS_HOMEPAGE="https://ionos.co.uk/"
+			;;
+		IT)
+			IONOS_WEBMAIL_TARGET_LINK="https://email.ionos.it/"
+			IONOS_HELP_TARGET_LINK="https://wl.hidrive.com/easy/0037"
+			IONOS_CUSTOMCLIENT_ANDROID="https://wl.hidrive.com/easy/0033"
+			IONOS_CUSTOMCLIENT_IOS="https://wl.hidrive.com/easy/00311"
+			IONOS_HOMEPAGE="https://ionos.it/"
+			;;
+		*)
+			log_warning "MARKET not set or invalid (${MARKET}), defaulting to DE links"
+			IONOS_WEBMAIL_TARGET_LINK="https://email.ionos.de/"
+			IONOS_HELP_TARGET_LINK="https://wl.hidrive.com/easy/0047"
+			IONOS_CUSTOMCLIENT_ANDROID="https://wl.hidrive.com/easy/0002"
+			IONOS_CUSTOMCLIENT_IOS="https://wl.hidrive.com/easy/0001"
+			IONOS_HOMEPAGE="https://ionos.de/"
+			;;
+	esac
+
+	ooc config:system:set ionos_peer_products ionos_webmail_target_link --value="${IONOS_WEBMAIL_TARGET_LINK}"
+	ooc config:system:set ionos_help_target_link --value="${IONOS_HELP_TARGET_LINK}"
+	ooc config:system:set ionos_customclient_android --value="${IONOS_CUSTOMCLIENT_ANDROID}"
+	ooc config:system:set ionos_customclient_ios --value="${IONOS_CUSTOMCLIENT_IOS}"
+	ooc config:system:set ionos_homepage --value="${IONOS_HOMEPAGE}"
+	ooc theming:config url "${IONOS_HOMEPAGE}"
+}
+
 config_server() {
 	echo "Configure NextCloud basics"
 
@@ -44,11 +105,6 @@ config_ui() {
 	ooc theming:config disable-user-theming yes
 	ooc theming:config favicon "${FAVICON_DIR}/favicon.ico"
 	ooc config:app:set theming backgroundMime --value backgroundColor
-
-	IONOS_HOMEPAGE=$(ooc config:system:get ionos_homepage)
-	if [ -n "${IONOS_HOMEPAGE}" ]; then
-		ooc theming:config url "${IONOS_HOMEPAGE}"
-	fi
 }
 
 configure_app_nc_ionos_processes() {
@@ -219,6 +275,7 @@ main() {
 	fi
 
 	add_config_partials
+	set_market_links
 	config_server
 	config_apps
 	config_ui
