@@ -93,8 +93,22 @@ version.json: ## Generate version file
 	jq . version.json
 
 zip_dependencies: patch_shipped_json version.json ## Zip relevant files
-	echo "zip relevant files to $(TARGET_PACKAGE_NAME)" && \
+	@echo "[i] Checking if .buildnumber exists..."
+	@if [ ! -f .buildnumber ]; then \
+		echo ""; \
+		echo "**********************************************************************"; \
+		echo "ERROR: .buildnumber file not found!"; \
+		echo ""; \
+		echo "The .buildnumber file must exist before creating the package."; \
+		echo "Inject it before packaging, e.g. echo 42 > .buildnumber"; \
+		echo "**********************************************************************"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "[i] .buildnumber found: $$(cat .buildnumber)"
+	@echo "[i] zip relevant files to $(TARGET_PACKAGE_NAME)" && \
 	zip -r "$(TARGET_PACKAGE_NAME)" \
+		.buildnumber \
 		IONOS/ \
 		3rdparty/ \
 		apps/ \
