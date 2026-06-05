@@ -32,6 +32,17 @@ config_server() {
 	ooc config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
 
+log_market_config() {
+	# IONOS links are applied declaratively via the config partials. Read them back
+	# here (config:system:get only) so the resulting MARKET and URLs show up in the
+	# pod log for troubleshooting.
+	echo "MARKET=${MARKET:-<unset>} — effective IONOS links:"
+	echo "  ionos_webmail_target_link = $(ooc config:system:get ionos_peer_products ionos_webmail_target_link)"
+	for _key in ionos_help_target_link ionos_customclient_android ionos_customclient_ios ionos_homepage; do
+		echo "  ${_key} = $(ooc config:system:get "${_key}")"
+	done
+}
+
 config_ui() {
 	echo "Configure theming"
 
@@ -221,6 +232,7 @@ main() {
 	config_server
 	config_apps
 	config_ui
+	log_market_config
 	disable_apps
 }
 
