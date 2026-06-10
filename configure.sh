@@ -101,6 +101,10 @@ configure_app_richdocuments() {
 	ooc config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
 	ooc config:app:set richdocuments enabled --value='yes'
 
+	if [ "${COLLABORA_WOPI_ALLOWLIST}" ]; then
+		ooc config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
+	fi
+
 	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
 		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
