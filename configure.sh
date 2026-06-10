@@ -200,9 +200,12 @@ configure_collabora_app() {
 	execute_occ_command config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
 	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
-	# Configure SSL certificate verification
-	if [ "${COLLABORA_SELF_SIGNED}" = "true" ]; then
-		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
+	if [ "${COLLABORA_WOPI_ALLOWLIST}" ]; then
+		ooc config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
+	fi
+
+	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
+		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
 	fi
