@@ -3,12 +3,22 @@
 
 TARGET_PACKAGE_NAME=hidrivenext-server.zip
 
+# Architecture configuration
+ARCHITECTURE = x86_64
+
+# Variables for notify_push binary
+NOTIFY_PUSH_DIR = apps-external/notify_push
+NOTIFY_PUSH_BIN_DIR = $(NOTIFY_PUSH_DIR)/bin/$(ARCHITECTURE)
+NOTIFY_PUSH_BINARY = $(NOTIFY_PUSH_BIN_DIR)/notify_push
+NOTIFY_PUSH_VERSION = $(shell cd $(NOTIFY_PUSH_DIR) && grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
+NOTIFY_PUSH_URL = https://github.com/nextcloud/notify_push/releases/download/v$(NOTIFY_PUSH_VERSION)/notify_push-$(ARCHITECTURE)-unknown-linux-musl
+
 # Core build targets
 .PHONY: help clean .remove_node_modules
 # Main Nextcloud build
 .PHONY: build_nextcloud
 # Applications
-.PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app
+.PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app build_notify_push_app build_notify_push_binary
 # Themes
 .PHONY: build_dep_ionos_theme
 # Configuration and packaging
@@ -164,7 +174,29 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "themes/nc-ionos-theme/README.md" \
 	-x "themes/nc-ionos-theme/IONOS**"
 
-.build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app
+# notify_push binary target: downloads the pre-built binary from GitHub releases
+$(NOTIFY_PUSH_BINARY): $(NOTIFY_PUSH_DIR)/appinfo/info.xml
+	@echo "[i] Building notify_push binary target for version $(NOTIFY_PUSH_VERSION)..."
+	@mkdir -p $(NOTIFY_PUSH_BIN_DIR)
+	@echo "[i] Downloading notify_push binary version $(NOTIFY_PUSH_VERSION)..."
+	curl -L -o $@ $(NOTIFY_PUSH_URL)
+	@echo "[i] Verifying binary integrity..."
+	@sha256sum $@ > $@.sha256
+	@echo "[i] Binary SHA256: $$(sha256sum $@ | cut -d' ' -f1)"
+	chmod +x $@
+	@echo "[i] notify_push binary v$(NOTIFY_PUSH_VERSION) downloaded and verified successfully"
+
+$(NOTIFY_PUSH_DIR)/vendor/autoload.php: $(NOTIFY_PUSH_DIR)/composer.json
+	@echo "[i] Installing notify_push PHP dependencies..."
+	cd $(NOTIFY_PUSH_DIR) && composer install --no-dev -o
+
+build_notify_push_app: $(NOTIFY_PUSH_DIR)/vendor/autoload.php $(NOTIFY_PUSH_BINARY) ## Install and build notify_push app
+	@echo "[✓] notify_push app built successfully"
+
+build_notify_push_binary: $(NOTIFY_PUSH_BINARY) ## Download notify_push binary
+	@echo "[i] notify_push binary ready"
+
+.build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app build_notify_push_app
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	echo "Everything done for a release"
