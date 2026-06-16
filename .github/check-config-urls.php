@@ -38,6 +38,7 @@ const MARKETS = ['FR', 'DE', 'ES', 'UK', 'IT', '', 'INVALID_MARKET'];
 const REQUIRED_URL_KEYS = [
 	['ionos_peer_products', 'ionos_webmail_target_link'],
 	['ionos_help_target_link'],
+	['ionos_security_target_link'],
 	['ionos_customclient_android'],
 	['ionos_customclient_ios'],
 	['ionos_customclient_windows'],
