@@ -268,6 +268,9 @@ config_apps() {
 	execute_occ_command config:app:set --value no files grid_view
 	execute_occ_command config:app:set --value no files folder_tree
 
+	echo "Enable simplenavigation app"
+	execute_occ_command app:enable simplenavigation
+
 	log_info "Configure DAV"
 	execute_occ_command config:app:set dav system_addressbook_exposed --value="no"
 }

@@ -20,7 +20,7 @@ NPM_BUILD        = npm run build
 
 # App category lists — drive .build_deps and generate_apps_matrix_json
 # apps-custom/ — npm only (no composer)
-CUSTOM_NPM_APPS = simplesettings
+CUSTOM_NPM_APPS = simplesettings simplenavigation
 # apps-custom/ — composer only (no npm, even if package.json present)
 CUSTOM_COMPOSER_APPS = nc_ionos_processes
 # apps-external/ — full build (composer + npm)
