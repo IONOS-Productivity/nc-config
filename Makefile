@@ -6,7 +6,7 @@ TARGET_PACKAGE_NAME=hidrivenext-server.zip
 # Core build targets
 .PHONY: help clean .remove_node_modules
 # Main Nextcloud build
-.PHONY: build_nextcloud build_nextcloud_only
+.PHONY: build_nextcloud
 # Applications
 .PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app
 # Themes
@@ -25,32 +25,25 @@ help: ## This help.
 	@echo "Usage: make [target]"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-# HELP
-# This will output the help for each task
-# thanks to https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-.DEFAULT_GOAL := help
 
 .remove_node_modules: ## Remove node_modules
 	rm -rf node_modules
 
 
-build_nextcloud_only:  ## Build HiDrive Next only (no custom npm packages rebuild)
+build_nextcloud:  ## Build HiDrive Next for production
 	set -e && \
 	composer install --no-dev -o && \
 	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run build
+	@echo "[i] HiDrive Next built"
 
-build_nextcloud_dev:  ## Build HiDrive Next only (no custom npm packages rebuild)
+build_nextcloud_dev:  ## Build HiDrive Next for development
 	set -e && \
 	composer install --no-dev -o && \
 	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
+	@echo "[i] HiDrive Next built for dev"
 
-build_nextcloud: build_nextcloud_only ## Build HiDrive Next
-	@echo "[i] HiDrive Next built"
-
-dev_nextcloud: build_nextcloud_dev ## Build HiDrive Next for development
-	@echo "[i] HiDrive Next built"
 
 build_dep_simplesettings_app: ## Install and build simplesettings app
 	cd apps-custom/simplesettings && \
