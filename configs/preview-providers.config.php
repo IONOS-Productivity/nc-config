@@ -1,6 +1,8 @@
 <?php
 
 $CONFIG = [
+	# This is for local testing only! 
+	# It is not the source of truth and will be overwritten by helm values.yaml file
 	'enabledPreviewProviders' => [
 		'OC\Preview\BMP',
 		'OC\Preview\GIF',
