@@ -85,6 +85,26 @@ configure_app_serverinfo() {
 	ooc config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
+# Configure notify_push app
+# Usage: configure_notify_push_app
+configure_app_notify_push() {
+	echo "Configuring notify_push app..."
+	ooc app:enable notify_push
+
+	echo "Retrieving base URL for notify_push endpoint..."
+	_base_url=$(ooc config:system:get overwrite.cli.url)
+
+	if [ -z "${_base_url}" ]; then
+		echo "\033[1;33mWarning: Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured.\033[0m"
+		return 0
+	fi
+
+	_notify_push_endpoint="${_base_url}/push"
+	echo "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
+
+	ooc config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
+}
+
 configure_app_richdocuments() {
 	ooc app:disable richdocuments
 
@@ -144,6 +164,7 @@ config_apps() {
 	configure_app_nc_ionos_processes
 	configure_app_serverinfo
 	configure_app_richdocuments
+	configure_app_notify_push
 
 	echo "Configure files app"
 	ooc config:app:set --value yes files crop_image_previews
