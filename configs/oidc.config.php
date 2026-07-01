@@ -52,7 +52,7 @@ $CONFIG = (static function (): array {
 
 	$uris = $logoutUris[$instanceType][$market] ?? [];
 
-	if ($uris === []) {
+	if ($uris === [] && $instanceType !== 'DEV') {
 		error_log(sprintf(
 			'oidc.config.php: no logout URIs for INSTANCE_TYPE=%s MARKET=%s',
 			$instanceType,
