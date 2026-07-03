@@ -1,67 +1,8 @@
 <?php
 
 $CONFIG = (static function (): array {
-	$market = strtoupper((string)getenv('MARKET'));
-	$instanceType = strtoupper((string)getenv('INSTANCE_TYPE'));
-
-	// endsessionendpointuri and postlogouturi are market- and env-specific.
-	$logoutUris = [
-		'QA' => [
-			'DE' => [
-				'endsessionendpointuri' => 'https://id.de.ac1.server.lan/logout',
-				'postlogouturi' => 'https://qa.storage.ionos.de',
-			],
-			'FR' => [
-				'endsessionendpointuri' => 'https://id.fr.ac1.server.lan/logout',
-				'postlogouturi' => 'https://qa.storage.ionos.fr',
-			],
-		],
-		'PRELIVE' => [
-			'DE' => [
-				'endsessionendpointuri' => 'https://id.ionos.de/logout',
-				'postlogouturi' => 'https://prelive.storage.ionos.de',
-			],
-			'FR' => [
-				'endsessionendpointuri' => 'https://id.ionos.fr/logout',
-				'postlogouturi' => 'https://prelive.storage.ionos.fr',
-			],
-		],
-		'LIVE' => [
-			'DE' => [
-				'endsessionendpointuri' => 'https://id.ionos.de/logout',
-				'postlogouturi' => 'https://storage.ionos.de',
-			],
-			'FR' => [
-				'endsessionendpointuri' => 'https://id.ionos.fr/logout',
-				'postlogouturi' => 'https://storage.ionos.fr',
-			],
-			'ES' => [
-				'endsessionendpointuri' => 'https://id.ionos.es/logout',
-				'postlogouturi' => 'https://storage.ionos.es',
-			],
-			'IT' => [
-				'endsessionendpointuri' => 'https://id.ionos.it/logout',
-				'postlogouturi' => 'https://storage.ionos.it',
-			],
-			'UK' => [
-				'endsessionendpointuri' => 'https://id.ionos.co.uk/logout',
-				'postlogouturi' => 'https://storage.ionos.co.uk',
-			],
-		],
-	];
-
-	$uris = $logoutUris[$instanceType][$market] ?? [];
-
-	if ($uris === [] && $instanceType !== 'DEV') {
-		error_log(sprintf(
-			'oidc.config.php: no logout URIs for INSTANCE_TYPE=%s MARKET=%s',
-			$instanceType,
-			$market,
-		));
-	}
-
 	return [
-		'user_oidc' => array_merge([
+		'user_oidc' => [
 			'enable_default_claims' => false,
 			// When default claims are disabled, each claim will be asked for
 			// only if there is an attribute explicitely mapped in the OpenId
@@ -90,6 +31,6 @@ $CONFIG = (static function (): array {
 			// Enable UserInfo fallback for mappingUid claim resolution
 			// (IONOS access tokens lack the claim; permanent per AD-7, CISOLOGIN-902)
 			'userinfo_bearer_validation' => true,
-		], $uris),
+		],
 	];
 })();
