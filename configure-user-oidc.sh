@@ -65,6 +65,7 @@ configure_user_oidc() {
 		--unique-uid=0 \
 		--scope="${ENC_OIDC_SCOPES}" \
 		--check-bearer=1 \
+		--send-id-token-hint=1 \
 		${logout_flags}
 
 	# Don't show a login page, send users directly to the ID provider
