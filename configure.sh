@@ -117,10 +117,19 @@ configure_server_basics() {
 	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
 
-# Configure HiDrive Next theming and branding
-# Usage: configure_theming
-configure_theming() {
-	log_info "Configuring HiDrive Next theming..."
+log_market_config() {
+	# IONOS links are applied declaratively via the config partials. Read them back
+	# here (config:system:get only) so the resulting MARKET and URLs show up in the
+	# pod log for troubleshooting.
+	echo "MARKET=${MARKET:-<unset>} — effective IONOS links:"
+	echo "  ionos_webmail_target_link = $(ooc config:system:get ionos_peer_products ionos_webmail_target_link)"
+	for _key in ionos_help_target_link ionos_customclient_android ionos_customclient_ios ionos_homepage; do
+		echo "  ${_key} = $(ooc config:system:get "${_key}")"
+	done
+}
+
+config_ui() {
+	echo "Configure theming"
 
 	execute_occ_command theming:config name "HiDrive Next"
 	execute_occ_command theming:config slogan "powered by IONOS"
@@ -167,12 +176,28 @@ configure_serverinfo_app() {
 	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
-# Configure Collabora/richdocuments integration
-# Usage: configure_collabora_app
-configure_collabora_app() {
-	log_info "Configuring Collabora integration..."
-	# Disable app initially
-	execute_occ_command app:disable richdocuments
+# Configure notify_push app
+# Usage: configure_notify_push_app
+configure_app_notify_push() {
+	echo "Configuring notify_push app..."
+	ooc app:enable notify_push
+
+	echo "Retrieving base URL for notify_push endpoint..."
+	_base_url=$(ooc config:system:get overwrite.cli.url)
+
+	if [ -z "${_base_url}" ]; then
+		echo "\033[1;33mWarning: Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured.\033[0m"
+		return 0
+	fi
+
+	_notify_push_endpoint="${_base_url}/push"
+	echo "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
+
+	ooc config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
+}
+
+configure_app_richdocuments() {
+	ooc app:disable richdocuments
 
 	# Validate required environment variables
 	if ! [ "${COLLABORA_HOST}" ]; then
@@ -189,9 +214,12 @@ configure_collabora_app() {
 	execute_occ_command config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
 	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
-	# Configure SSL certificate verification
-	if [ "${COLLABORA_SELF_SIGNED}" = "true" ]; then
-		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
+	if [ "${COLLABORA_WOPI_ALLOWLIST}" ]; then
+		ooc config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
+	fi
+
+	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
+		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
 	fi
@@ -226,9 +254,10 @@ config_apps() {
 	execute_occ_command config:app:set --value="no" core shareapi_allow_group_sharing
 	execute_occ_command config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
-	configure_ionos_processes_app
-	configure_serverinfo_app
-	configure_collabora_app
+	configure_app_nc_ionos_processes
+	configure_app_serverinfo
+	configure_app_richdocuments
+	configure_app_notify_push
 
 	log_info "Configure files app"
 	execute_occ_command config:app:set --value yes files crop_image_previews
@@ -337,10 +366,9 @@ main() {
 	setup_config_partials
 	configure_server_basics
 	config_apps
-	configure_theming
-	disable_configured_apps
-
-	echo "\033[1;32m[i] HiDrive Next configuration completed successfully!\033[0m"
+	config_ui
+	log_market_config
+	disable_apps
 }
 
 # Execute main function with all script arguments

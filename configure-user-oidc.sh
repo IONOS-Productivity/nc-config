@@ -7,12 +7,57 @@ log_fatal() {
 	exit 1
 }
 
+# Returns the end-session endpoint URI for the given INSTANCE_TYPE and MARKET.
+endsessionendpointuri() {
+	case "${INSTANCE_TYPE}:${MARKET}" in
+		QA:DE)       echo 'https://id.de.ac1.server.lan/logout' ;;
+		QA:FR)       echo 'https://id.fr.ac1.server.lan/logout' ;;
+		PRELIVE:DE)  echo 'https://id.ionos.de/logout' ;;
+		PRELIVE:FR)  echo 'https://id.ionos.fr/logout' ;;
+		LIVE:DE)     echo 'https://id.ionos.de/logout' ;;
+		LIVE:FR)     echo 'https://id.ionos.fr/logout' ;;
+		LIVE:ES)     echo 'https://id.ionos.es/logout' ;;
+		LIVE:IT)     echo 'https://id.ionos.it/logout' ;;
+		LIVE:UK)     echo 'https://id.ionos.co.uk/logout' ;;
+	esac
+}
+
+# Returns the post-logout redirect URI for the given INSTANCE_TYPE and MARKET.
+postlogouturi() {
+	case "${INSTANCE_TYPE}:${MARKET}" in
+		QA:DE)       echo 'https://qa.storage.ionos.de' ;;
+		QA:FR)       echo 'https://qa.storage.ionos.fr' ;;
+		PRELIVE:DE)  echo 'https://prelive.storage.ionos.de' ;;
+		PRELIVE:FR)  echo 'https://prelive.storage.ionos.fr' ;;
+		LIVE:DE)     echo 'https://storage.ionos.de' ;;
+		LIVE:FR)     echo 'https://storage.ionos.fr' ;;
+		LIVE:ES)     echo 'https://storage.ionos.es' ;;
+		LIVE:IT)     echo 'https://storage.ionos.it' ;;
+		LIVE:UK)     echo 'https://storage.ionos.co.uk' ;;
+	esac
+}
+
 configure_user_oidc() {
+	end_session_uri="$(endsessionendpointuri)"
+	post_logout_uri="$(postlogouturi)"
+
+	if [ -z "${end_session_uri}" ] || [ -z "${post_logout_uri}" ]; then
+		if [ "${INSTANCE_TYPE}" != "DEV" ]; then
+			fail "No logout URIs for INSTANCE_TYPE=${INSTANCE_TYPE} MARKET=${MARKET}"
+		fi
+	fi
+
 	# unique-uid=0 is required to prevent user_oidc from creating an ID in its
 	# backend that's different from the user ID in Nextcloud's own backend,
 	# which leads to the user_oidc not being used during runtime.
 	#
 	# https://github.com/nextcloud/user_oidc/blob/v5.0.3/lib/Service/LocalIdService.php#L30
+	logout_flags=""
+	if [ -n "${end_session_uri}" ] && [ -n "${post_logout_uri}" ]; then
+		logout_flags="--endsessionendpointuri=${end_session_uri} --postlogouturi=${post_logout_uri}"
+	fi
+
+	# shellcheck disable=SC2086
 	./occ user_oidc:provider "${ENC_OIDC_PROVIDER_IDENTIFIER}" \
 		--clientid="${ENC_OIDC_CLIENT_ID}" \
 		--clientsecret="${ENC_OIDC_SECRET}" \
@@ -20,7 +65,10 @@ configure_user_oidc() {
 		--extra-claims="${ENC_OIDC_EXTRA_CLAIMS}" \
 		--mapping-uid="${ENC_OIDC_MAPPING_UID}" \
 		--unique-uid=0 \
-		--scope="${ENC_OIDC_SCOPES}"
+		--scope="${ENC_OIDC_SCOPES}" \
+		--check-bearer=1 \
+		--send-id-token-hint=1 \
+		${logout_flags}
 
 	# Don't show a login page, send users directly to the ID provider
 	./occ config:app:set --value=0 user_oidc allow_multiple_user_backends
@@ -73,6 +121,16 @@ main() {
 	if [ -z "${ENC_OIDC_SCOPES}" ]; then
 		log_fatal "ENC_OIDC_SCOPES not set"
 	fi
+
+	if [ -z "${INSTANCE_TYPE}" ]; then
+		fail "INSTANCE_TYPE not set"
+	fi
+	INSTANCE_TYPE=$(printf '%s' "${INSTANCE_TYPE}" | tr '[:lower:]' '[:upper:]')
+
+	if [ -z "${MARKET}" ]; then
+		fail "MARKET not set"
+	fi
+	MARKET=$(printf '%s' "${MARKET}" | tr '[:lower:]' '[:upper:]')
 
 	if ! configure_user_oidc; then
 		log_fatal "Error creating provider \"${ENC_OIDC_PROVIDER_IDENTIFIER}\" with client ID \"${ENC_OIDC_CLIENT_ID}\" (occ failed)"
