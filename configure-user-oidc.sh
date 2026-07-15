@@ -22,7 +22,7 @@ endsessionendpointuri() {
 		LIVE:FR)     echo 'https://id.ionos.fr/logout' ;;
 		LIVE:ES)     echo 'https://id.ionos.es/logout' ;;
 		LIVE:IT)     echo 'https://id.ionos.it/logout' ;;
-		LIVE:UK)     echo 'https://id.ionos.co.uk/logout' ;;
+		LIVE:GB)     echo 'https://id.ionos.co.uk/logout' ;;
 	esac
 }
 
@@ -37,7 +37,7 @@ postlogouturi() {
 		LIVE:FR)     echo 'https://storage.ionos.fr' ;;
 		LIVE:ES)     echo 'https://storage.ionos.es' ;;
 		LIVE:IT)     echo 'https://storage.ionos.it' ;;
-		LIVE:UK)     echo 'https://storage.ionos.co.uk' ;;
+		LIVE:GB)     echo 'https://storage.ionos.co.uk' ;;
 	esac
 }
 
