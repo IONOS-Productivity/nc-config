@@ -4,6 +4,15 @@
 # Build configuration
 TARGET_PACKAGE_NAME = hidrivenext-server.zip
 
+ARCHITECTURE = x86_64
+
+# Variables for notify_push binary
+NOTIFY_PUSH_DIR = apps-external/notify_push
+NOTIFY_PUSH_BIN_DIR = $(NOTIFY_PUSH_DIR)/bin/$(ARCHITECTURE)
+NOTIFY_PUSH_BINARY = $(NOTIFY_PUSH_BIN_DIR)/notify_push
+NOTIFY_PUSH_VERSION = $(shell cd $(NOTIFY_PUSH_DIR) && grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
+NOTIFY_PUSH_URL = https://github.com/nextcloud/notify_push/releases/download/v$(NOTIFY_PUSH_VERSION)/notify_push-$(ARCHITECTURE)-unknown-linux-musl
+
 # Common build commands
 COMPOSER_INSTALL = composer install --no-dev -o --no-interaction
 NPM_INSTALL      = npm ci --prefer-offline --no-audit
@@ -18,13 +27,14 @@ CUSTOM_COMPOSER_APPS = nc_ionos_processes
 EXTERNAL_FULL_APPS = richdocuments user_oidc viewer
 # Apps with special build targets (not in the standard categories above)
 # These apps have dedicated build_<app>_app targets with custom build logic
-SPECIAL_BUILD_APPS = nc_theming nc-ionos-theme
+SPECIAL_BUILD_APPS = nc_theming nc-ionos-theme notify_push
 
 # Metadata for generate_apps_matrix_json: "name|path|has_npm|has_composer"
 # One entry per app in SPECIAL_BUILD_APPS — must be kept in sync.
 SPECIAL_BUILD_APPS_META = \
 	"nc_theming|apps-custom/nc_theming|false|true" \
-	"nc-ionos-theme|themes/nc-ionos-theme|true|false"
+	"nc-ionos-theme|themes/nc-ionos-theme|true|false" \
+	"notify_push|apps-external/notify_push|false|true"
 
 # App folders to add to shipped.json (makes apps non-removable)
 # Add additional app folders here to include them in the shipped apps list
@@ -44,7 +54,7 @@ SPECIAL_BUILD_TARGETS   = $(patsubst %,build_%_app,$(SPECIAL_BUILD_APPS))
 # Core build targets
 .PHONY: help clean .precheck
 # Main Nextcloud build
-.PHONY: build_nextcloud build_nextcloud_only build_nextcloud_dev dev_nextcloud
+.PHONY: build_nextcloud build_nextcloud_dev
 # Applications — dynamically derived from category lists
 .PHONY: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
 # Configuration and packaging
@@ -121,25 +131,24 @@ clean: ## Clean up build artifacts
 	rm -f $(TARGET_PACKAGE_NAME)
 	@echo "[✓] Clean completed"
 
-build_nextcloud_only: ## Build HiDrive Next only (no custom npm packages rebuild)
-	set -e && \
-	$(COMPOSER_INSTALL) && \
-	$(NPM_INSTALL) && \
-	NODE_OPTIONS="--max-old-space-size=4096" $(NPM_BUILD)
-	@echo "[✓] HiDrive Next core built successfully"
+.remove_node_modules: ## Remove node_modules
+	@echo "[i] Removing node_modules directories..."
+	rm -rf node_modules
 
-build_nextcloud_dev: ## Build HiDrive Next dev (no custom npm packages rebuild)
+
+build_nextcloud:  ## Build HiDrive Next for production
 	set -e && \
-	$(COMPOSER_INSTALL) && \
-	$(NPM_INSTALL) && \
+	composer install --no-dev -o && \
+	npm ci && \
+	NODE_OPTIONS="--max-old-space-size=4096" npm run build
+	@echo "[i] HiDrive Next built"
+
+build_nextcloud_dev:  ## Build HiDrive Next only for development
+	set -e && \
+	composer install --no-dev -o && \
+	npm ci && \
 	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
-	@echo "[✓] HiDrive Next core (dev) built successfully"
-
-build_nextcloud: build_nextcloud_only ## Build HiDrive Next
-	@echo "[i] HiDrive Next built"
-
-dev_nextcloud: build_nextcloud_dev ## Build HiDrive Next dev
-	@echo "[i] HiDrive Next built"
+	@echo "[i] HiDrive Next built for dev"
 
 # Common macros for standard build categories
 define build_custom_npm_app
@@ -184,6 +193,28 @@ build_nc-ionos-theme_app: ## Install and build ionos theme
 	$(NPM_INSTALL) && \
 	$(NPM_BUILD)
 	@echo "[✓] nc-ionos-theme app built successfully"
+
+# notify_push binary target: downloads the pre-built binary from GitHub releases
+$(NOTIFY_PUSH_BINARY): $(NOTIFY_PUSH_DIR)/appinfo/info.xml
+	@echo "[i] Building notify_push binary target for version $(NOTIFY_PUSH_VERSION)..."
+	@mkdir -p $(NOTIFY_PUSH_BIN_DIR)
+	@echo "[i] Downloading notify_push binary version $(NOTIFY_PUSH_VERSION)..."
+	curl -L -o $@ $(NOTIFY_PUSH_URL)
+	@echo "[i] Verifying binary integrity..."
+	@sha256sum $@ > $@.sha256
+	@echo "[i] Binary SHA256: $$(sha256sum $@ | cut -d' ' -f1)"
+	chmod +x $@
+	@echo "[i] notify_push binary v$(NOTIFY_PUSH_VERSION) downloaded and verified successfully"
+
+$(NOTIFY_PUSH_DIR)/vendor/autoload.php: $(NOTIFY_PUSH_DIR)/composer.json
+	@echo "[i] Installing notify_push PHP dependencies..."
+	cd $(NOTIFY_PUSH_DIR) && composer install --no-dev -o
+
+build_notify_push_app: $(NOTIFY_PUSH_DIR)/vendor/autoload.php $(NOTIFY_PUSH_BINARY) ## Install and build notify_push app
+	@echo "[✓] notify_push app built successfully"
+
+build_notify_push_binary: $(NOTIFY_PUSH_BINARY) ## Download notify_push binary
+	@echo "[i] notify_push binary ready"
 
 add_config_partials: .precheck ## Copy custom config files to Nextcloud config
 	@echo "[i] Copying config files..."
@@ -291,7 +322,7 @@ package_after_build: zip_dependencies ## Create package after build is complete
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
 	@echo "[i] Everything done for a release"
 
-build_locally: dev_nextcloud .build_deps ## Build all apps/themes for local development
+build_locally: build_nextcloud_dev .build_deps ## Build all apps/themes for local development
 	@echo "[i] Everything done for local/dev"
 
 validate_app_list_uniqueness: .precheck ## Validate that apps are only in one list and not duplicated by hardcoded targets

@@ -1,40 +1,41 @@
 <?php
-
 /*
  * SPDX-FileCopyrightText: 2025 STRATO GmbH
  *
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-$CONFIG = [
-	'user_oidc' => [
-		'enable_default_claims' => false,
-		// When default claims are disabled, each claim will be asked for
-		// only if there is an attribute explicitely mapped in the OpenId
-		// client settings
-		'use_pkce' => true,
-		// true and true are the defaults
-		// > If the user already exists in another backend, we don't create a
-		// > new one in the user_oidc backend. We update the information
-		// > (mapped attributes) of the existing user. If the user does not
-		// > exist in another backend, we create it in the user_oidc backend
-		// https://github.com/nextcloud/user_oidc#soft-auto-provisioning
-		'auto_provision' => true,
-		// Update *existing information* in Nextcloud backend
-		// (false = fail login if existing in other backend)
-		'soft_auto_provision' => true,
-		// > Soft auto provisioning but prevent user_oidc to create users,
-		// > meaning you want user_oidc to accept connection only for users that already exist in Nextcloud
-		// > and are managed by other user backend BUT you still want user_oidc to set the user information
-		// > according to the OIDC mapped attributes.
-		//
-		// https://github.com/nextcloud/user_oidc?tab=readme-ov-file#soft-auto-provisioning-without-user-creation
-		'disable_account_creation' => true,
-		// IONOS access tokens carry aud=ionos.com, not per-client values;
-		// audience check must be off (permanent)
-		'selfencoded_bearer_validation_audience_check' => false,
-		// Enable UserInfo fallback for mappingUid claim resolution
-		// (IONOS access tokens lack the claim; permanent per AD-7, CISOLOGIN-902)
-		'userinfo_bearer_validation' => true,
-	],
-];
+$CONFIG = (static function (): array {
+	return [
+		'user_oidc' => [
+			'enable_default_claims' => false,
+			// When default claims are disabled, each claim will be asked for
+			// only if there is an attribute explicitely mapped in the OpenId
+			// client settings
+			'use_pkce' => true,
+			// true and true are the defaults
+			// > If the user already exists in another backend, we don't create a
+			// > new one in the user_oidc backend. We update the information
+			// > (mapped attributes) of the existing user. If the user does not
+			// > exist in another backend, we create it in the user_oidc backend
+			// https://github.com/nextcloud/user_oidc#soft-auto-provisioning
+			'auto_provision' => true,
+			// Update *existing information* in Nextcloud backend
+			// (false = fail login if existing in other backend)
+			'soft_auto_provision' => true,
+			// > Soft auto provisioning but prevent user_oidc to create users,
+			// > meaning you want user_oidc to accept connection only for users that already exist in Nextcloud
+			// > and are managed by other user backend BUT you still want user_oidc to set the user information
+			// > according to the OIDC mapped attributes.
+			//
+			// https://github.com/nextcloud/user_oidc?tab=readme-ov-file#soft-auto-provisioning-without-user-creation
+			'disable_account_creation' => true,
+			// IONOS access tokens carry aud=ionos.com, not per-client values;
+			// audience check must be off (permanent)
+			'selfencoded_bearer_validation_audience_check' => false,
+			// Enable UserInfo fallback for mappingUid claim resolution
+			// (IONOS access tokens lack the claim; permanent per AD-7, CISOLOGIN-902)
+			'userinfo_bearer_validation' => true,
+		],
+	];
+})();
