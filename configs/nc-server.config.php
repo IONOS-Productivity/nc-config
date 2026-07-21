@@ -6,6 +6,6 @@
  */
 
 $CONFIG = [
-	// Disable custom lookup server to publish user data
+	// Disable custom lookup server to avoid publishing user data
 	'lookup_server' => '',
 ];
