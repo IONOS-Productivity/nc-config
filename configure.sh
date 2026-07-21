@@ -123,9 +123,9 @@ log_market_config() {
 	# here (config:system:get only) so the resulting MARKET and URLs show up in the
 	# pod log for troubleshooting.
 	echo "MARKET=${MARKET:-<unset>} — effective IONOS links:"
-	echo "  ionos_webmail_target_link = $(ooc config:system:get ionos_peer_products ionos_webmail_target_link)"
+	echo "  ionos_webmail_target_link = $(execute_occ_command config:system:get ionos_peer_products ionos_webmail_target_link)"
 	for _key in ionos_help_target_link ionos_customclient_android ionos_customclient_ios ionos_homepage; do
-		echo "  ${_key} = $(ooc config:system:get "${_key}")"
+		echo "  ${_key} = $(execute_occ_command config:system:get "${_key}")"
 	done
 }
 
@@ -181,10 +181,10 @@ configure_serverinfo_app() {
 # Usage: configure_notify_push_app
 configure_app_notify_push() {
 	echo "Configuring notify_push app..."
-	ooc app:enable notify_push
+	execute_occ_command app:enable notify_push
 
 	echo "Retrieving base URL for notify_push endpoint..."
-	_base_url=$(ooc config:system:get overwrite.cli.url)
+	_base_url=$(execute_occ_command config:system:get overwrite.cli.url)
 
 	if [ -z "${_base_url}" ]; then
 		echo "\033[1;33mWarning: Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured.\033[0m"
@@ -194,11 +194,11 @@ configure_app_notify_push() {
 	_notify_push_endpoint="${_base_url}/push"
 	echo "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
 
-	ooc config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
+	execute_occ_command config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
 }
 
 configure_app_richdocuments() {
-	ooc app:disable richdocuments
+	execute_occ_command app:disable richdocuments
 
 	# Validate required environment variables
 	if ! [ "${COLLABORA_HOST}" ]; then
@@ -216,11 +216,11 @@ configure_app_richdocuments() {
 	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
 	if [ "${COLLABORA_WOPI_ALLOWLIST}" ]; then
-		ooc config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
+		execute_occ_command config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
 	fi
 
 	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
-		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
+		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
 	fi
@@ -255,8 +255,8 @@ config_apps() {
 	execute_occ_command config:app:set --value="no" core shareapi_allow_group_sharing
 	execute_occ_command config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
-	configure_app_nc_ionos_processes
-	configure_app_serverinfo
+	configure_ionos_processes_app
+	configure_serverinfo_app
 	configure_app_richdocuments
 	configure_app_notify_push
 
@@ -335,7 +335,7 @@ main() {
 	config_apps
 	config_ui
 	log_market_config
-	disable_apps
+	disable_configured_apps
 }
 
 # Execute main function with all script arguments
