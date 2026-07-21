@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * SPDX-FileCopyrightText: 2025 STRATO GmbH
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 $CONFIG = [
 	'htaccess.RewriteBase' => '/',
 	'forwarded_for_headers' => [ '0' => 'HTTP_X_FORWARDED_FOR' ],

@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # This script assumes to be located in /IONOS as submodule within the Nextcloud server
 # repository.
 

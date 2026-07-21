@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 #===============================================================================
 # HiDrive Next Configuration Script
@@ -6,12 +8,12 @@
 # This script configures a HiDrive Next instance with IONOS-specific settings.
 #
 # Features:
-# - Server basic configuration (lookup server, admin email, search providers)
+# - Server basic configuration (admin email, search providers)
 # - Theming and branding setup for IONOS HiDrive Next
 # - App configuration (viewer, sharing, files, DAV)
 # - Integration setup (IONOS processes, serverinfo, Collabora)
 # - Selective app disabling based on configuration
-# - Configuration partials for app paths
+# - Runtime-safe OCC configuration (system settings like lookup_server are provided via config partials)
 #
 # Environment Variables:
 # - ADMIN_USERNAME: Admin username (default: admin)
@@ -111,7 +113,6 @@ verify_nextcloud_installation() {
 configure_server_basics() {
 	log_info "Configuring HiDrive Next server basics..."
 
-	execute_occ_command config:system:set lookup_server --value=""
 	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
 	# array of providers to be used for unified search
 	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
@@ -122,9 +123,9 @@ log_market_config() {
 	# here (config:system:get only) so the resulting MARKET and URLs show up in the
 	# pod log for troubleshooting.
 	echo "MARKET=${MARKET:-<unset>} — effective IONOS links:"
-	echo "  ionos_webmail_target_link = $(ooc config:system:get ionos_peer_products ionos_webmail_target_link)"
+	echo "  ionos_webmail_target_link = $(execute_occ_command config:system:get ionos_peer_products ionos_webmail_target_link)"
 	for _key in ionos_help_target_link ionos_customclient_android ionos_customclient_ios ionos_homepage; do
-		echo "  ${_key} = $(ooc config:system:get "${_key}")"
+		echo "  ${_key} = $(execute_occ_command config:system:get "${_key}")"
 	done
 }
 
@@ -180,10 +181,10 @@ configure_serverinfo_app() {
 # Usage: configure_notify_push_app
 configure_app_notify_push() {
 	echo "Configuring notify_push app..."
-	ooc app:enable notify_push
+	execute_occ_command app:enable notify_push
 
 	echo "Retrieving base URL for notify_push endpoint..."
-	_base_url=$(ooc config:system:get overwrite.cli.url)
+	_base_url=$(execute_occ_command config:system:get overwrite.cli.url)
 
 	if [ -z "${_base_url}" ]; then
 		echo "\033[1;33mWarning: Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured.\033[0m"
@@ -193,11 +194,11 @@ configure_app_notify_push() {
 	_notify_push_endpoint="${_base_url}/push"
 	echo "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
 
-	ooc config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
+	execute_occ_command config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
 }
 
 configure_app_richdocuments() {
-	ooc app:disable richdocuments
+	execute_occ_command app:disable richdocuments
 
 	# Validate required environment variables
 	if ! [ "${COLLABORA_HOST}" ]; then
@@ -215,11 +216,11 @@ configure_app_richdocuments() {
 	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
 	if [ "${COLLABORA_WOPI_ALLOWLIST}" ]; then
-		ooc config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
+		execute_occ_command config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
 	fi
 
 	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
-		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
+		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
 		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
 	fi
@@ -254,8 +255,8 @@ config_apps() {
 	execute_occ_command config:app:set --value="no" core shareapi_allow_group_sharing
 	execute_occ_command config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
-	configure_app_nc_ionos_processes
-	configure_app_serverinfo
+	configure_ionos_processes_app
+	configure_serverinfo_app
 	configure_app_richdocuments
 	configure_app_notify_push
 
@@ -317,39 +318,6 @@ disable_configured_apps() {
 }
 
 #===============================================================================
-# Configuration Setup Functions
-#===============================================================================
-
-# Add HiDrive Next configuration partials for app paths
-# Usage: setup_config_partials
-setup_config_partials() {
-	log_info "Setting up configuration partials..."
-
-	cat >"${SCRIPT_DIR}/../config/app-paths.config.php" <<-'EOF'
-		<?php
-		$CONFIG = [
-		  'apps_paths' => [
-		    [
-		      'path' => '/var/www/html/apps',
-		      'url' => '/apps',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-custom',
-		      'url' => '/apps-custom',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-external',
-		      'url' => '/apps-external',
-		      'writable' => true,
-		    ],
-		  ],
-		];
-	EOF
-}
-
-#===============================================================================
 # Main Execution Function
 #===============================================================================
 
@@ -363,12 +331,11 @@ main() {
 	verify_nextcloud_installation
 
 	# Execute configuration steps
-	setup_config_partials
 	configure_server_basics
 	config_apps
 	config_ui
 	log_market_config
-	disable_apps
+	disable_configured_apps
 }
 
 # Execute main function with all script arguments

@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * SPDX-FileCopyrightText: 2025 STRATO GmbH
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 $CONFIG = (static function (): array {
 	$market = strtoupper((string)getenv('MARKET'));
 
@@ -34,7 +40,7 @@ $CONFIG = (static function (): array {
 			'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/0031',
 			'ionos_homepage' => 'https://ionos.es/',
 		],
-		'UK' => [
+		'GB' => [
 			'ionos_peer_products' => [
 				'ionos_webmail_target_link' => 'https://email.ionos.co.uk/',
 			],
