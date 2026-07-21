@@ -1,35 +1,121 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
-BDIR="$( dirname "${0}" )"
-NEXTCLOUD_DIR="${BDIR}/.."
-FAVICON_DIR=$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)
-ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
+#===============================================================================
+# HiDrive Next Configuration Script
+#===============================================================================
+# This script configures a HiDrive Next instance with IONOS-specific settings.
+#
+# Features:
+# - Server basic configuration (admin email, search providers)
+# - Theming and branding setup for IONOS HiDrive Next
+# - App configuration (viewer, sharing, files, DAV)
+# - Integration setup (IONOS processes, serverinfo, Collabora)
+# - Selective app disabling based on configuration
+# - Runtime-safe OCC configuration (system settings like lookup_server are provided via config partials)
+#
+# Environment Variables:
+# - ADMIN_USERNAME: Admin username (default: admin)
+# - ADMIN_EMAIL: Admin email (default: admin@example.net)
+# - IONOS_PROCESSES_API_URL: API URL for IONOS processes
+# - IONOS_PROCESSES_USER: Username for IONOS processes API
+# - IONOS_PROCESSES_PASS: Password for IONOS processes API
+# - NC_APP_SERVERINFO_TOKEN: Token for serverinfo app
+# - COLLABORA_HOST: Collabora server host URL
+# - COLLABORA_EDIT_GROUPS: Groups allowed to edit in Collabora
+# - COLLABORA_SELF_SIGNED: Set to "true" for self-signed certificates
+#
+# Usage: ./configure.sh
+#===============================================================================
 
-. ${BDIR}/disabled-apps.inc.sh
+# Script configuration and constants
+SCRIPT_DIR="$(dirname "${0}")"
+readonly SCRIPT_DIR
+NEXTCLOUD_DIR="${SCRIPT_DIR}/.."
+readonly NEXTCLOUD_DIR
+FAVICON_DIR="$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)"
+readonly FAVICON_DIR
+readonly ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
-ooc() {
-	php occ \
-		"${@}"
-}
+# Load disabled apps configuration
+. "${SCRIPT_DIR}/disabled-apps.inc.sh"
 
-fail() {
-	echo "${*}"
-	exit 1
-}
+#===============================================================================
+# Utility Functions
+#===============================================================================
 
-checks() {
-	if ! which php >/dev/null 2>&1; then
-		fail "Error: php is required"
+# Execute NextCloud OCC command with error handling
+# Usage: execute_occ_command <command> [args...]
+execute_occ_command() {
+	if ! php occ "${@}"; then
+		log_error "Failed to execute OCC command: ${*}"
+		return 1
 	fi
 }
 
-config_server() {
-	echo "Configure NextCloud basics"
+# Log error message to stderr
+# Usage: log_error <message>
+log_error() {
+	echo "\033[1;31m[e] Error: ${*}\033[0m" >&2
+}
 
-	ooc user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >&2
+	exit 1
+}
+
+# Log warning message with yellow color
+# Usage: log_warning <message>
+log_warning() {
+	echo "\033[1;33m[w] Warning: ${*}\033[0m" >&2
+}
+
+# Log info message
+# Usage: log_info <message>
+log_info() {
+	echo "[i] ${*}"
+}
+
+# Check if required dependencies are available
+# Usage: check_dependencies
+check_dependencies() {
+	if ! which php >/dev/null 2>&1; then
+		log_fatal "php is required but not found in PATH"
+	fi
+}
+
+# Verify HiDrive Next installation status
+# Usage: verify_nextcloud_installation
+verify_nextcloud_installation() {
+	log_info "Verifying HiDrive Next installation status..."
+	_main_status="$( execute_occ_command status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
+
+	# Parse validation
+	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != "false" ]; then
+		log_info "Error testing Nextcloud install status. This is the output of occ status:"
+		execute_occ_command status
+		log_fatal "Nextcloud is not installed, abort"
+	elif [ "${_main_status}" != "true" ]; then
+		log_fatal "Nextcloud is not installed, abort"
+	fi
+}
+
+#===============================================================================
+# Configuration Functions
+#===============================================================================
+
+# Configure basic HiDrive Next server settings
+# Usage: configure_server_basics
+configure_server_basics() {
+	log_info "Configuring HiDrive Next server basics..."
+
+	execute_occ_command user:setting "${ADMIN_USERNAME}" settings email "${ADMIN_EMAIL}"
 	# array of providers to be used for unified search
-	ooc config:app:set --value '["files"]' --type array core unified_search.providers_allowed
+	execute_occ_command config:app:set --value '["files"]' --type array core unified_search.providers_allowed
 }
 
 log_market_config() {
@@ -37,62 +123,68 @@ log_market_config() {
 	# here (config:system:get only) so the resulting MARKET and URLs show up in the
 	# pod log for troubleshooting.
 	echo "MARKET=${MARKET:-<unset>} — effective IONOS links:"
-	echo "  ionos_webmail_target_link = $(ooc config:system:get ionos_peer_products ionos_webmail_target_link)"
+	echo "  ionos_webmail_target_link = $(execute_occ_command config:system:get ionos_peer_products ionos_webmail_target_link)"
 	for _key in ionos_help_target_link ionos_customclient_android ionos_customclient_ios ionos_homepage; do
-		echo "  ${_key} = $(ooc config:system:get "${_key}")"
+		echo "  ${_key} = $(execute_occ_command config:system:get "${_key}")"
 	done
 }
 
 config_ui() {
 	echo "Configure theming"
 
-	ooc theming:config name "HiDrive Next"
-	ooc theming:config slogan "powered by IONOS"
-	ooc theming:config imprintUrl " "
-	ooc theming:config privacyUrl " "
-	ooc theming:config primary_color "#003D8F"
-	ooc theming:config disable-user-theming yes
-	ooc theming:config favicon "${FAVICON_DIR}/favicon.ico"
-	ooc config:app:set theming backgroundMime --value backgroundColor
+	execute_occ_command theming:config name "HiDrive Next"
+	execute_occ_command theming:config slogan "powered by IONOS"
+	execute_occ_command theming:config imprintUrl " "
+	execute_occ_command theming:config privacyUrl " "
+	execute_occ_command theming:config primary_color "#003D8F"
+	execute_occ_command theming:config disable-user-theming yes
+	execute_occ_command theming:config favicon "${FAVICON_DIR}/favicon.ico"
+	execute_occ_command config:app:set theming backgroundMime --value backgroundColor
 
-	IONOS_HOMEPAGE=$(ooc config:system:get ionos_homepage)
-	if [ -n "${IONOS_HOMEPAGE}" ]; then
-		ooc theming:config url "${IONOS_HOMEPAGE}"
+	# Set homepage URL if configured
+	_ionos_homepage=$(execute_occ_command config:system:get ionos_homepage)
+	if [ -n "${_ionos_homepage}" ]; then
+		execute_occ_command theming:config url "${_ionos_homepage}"
 	fi
 }
 
-configure_app_nc_ionos_processes() {
-	echo "Configure nc_ionos_processes app"
+# Configure IONOS processes app with API credentials
+# Usage: configure_ionos_processes_app
+configure_ionos_processes_app() {
+	log_info "Configuring nc_ionos_processes app..."
 
+	# Check required environment variables
 	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
-		echo "\033[1;33mWarning: IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app\033[0m"
-		return
+		log_warning "IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app"
+		return 0
 	fi
 
-	ooc config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
-	ooc config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
-	ooc config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
+	execute_occ_command config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
+	execute_occ_command config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
+	execute_occ_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
-configure_app_serverinfo() {
-	echo "Configure serverinfo app"
+# Configure serverinfo app with authentication token
+# Usage: configure_serverinfo_app
+configure_serverinfo_app() {
+	log_info "Configuring serverinfo app..."
 
 	if [ -z "${NC_APP_SERVERINFO_TOKEN}" ]; then
-		echo "\033[1;33mWarning: NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app\033[0m"
-		return
+		log_warning "NC_APP_SERVERINFO_TOKEN not set, skipping configuration of serverinfo app"
+		return 0
 	fi
 
-	ooc config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
+	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
 # Configure notify_push app
 # Usage: configure_notify_push_app
 configure_app_notify_push() {
 	echo "Configuring notify_push app..."
-	ooc app:enable notify_push
+	execute_occ_command app:enable notify_push
 
 	echo "Retrieving base URL for notify_push endpoint..."
-	_base_url=$(ooc config:system:get overwrite.cli.url)
+	_base_url=$(execute_occ_command config:system:get overwrite.cli.url)
 
 	if [ -z "${_base_url}" ]; then
 		echo "\033[1;33mWarning: Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured.\033[0m"
@@ -102,163 +194,149 @@ configure_app_notify_push() {
 	_notify_push_endpoint="${_base_url}/push"
 	echo "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
 
-	ooc config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
+	execute_occ_command config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
 }
 
 configure_app_richdocuments() {
-	ooc app:disable richdocuments
+	execute_occ_command app:disable richdocuments
 
-	if ! [ "${COLLABORA_HOST}" ] ; then
-		fail Collabora host is not set
+	# Validate required environment variables
+	if ! [ "${COLLABORA_HOST}" ]; then
+		log_fatal "COLLABORA_HOST environment variable is not set"
 	fi
 
-	if ! [ "${COLLABORA_EDIT_GROUPS}" ] ; then
-		fail Collabora edit groups are not set
+	if ! [ "${COLLABORA_EDIT_GROUPS}" ]; then
+		log_fatal "COLLABORA_EDIT_GROUPS environment variable is not set"
 	fi
 
-	ooc app:enable richdocuments
-	ooc config:app:set richdocuments wopi_url --value="${COLLABORA_HOST}"
-	ooc config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
-	ooc config:app:set richdocuments enabled --value='yes'
+	# Configure and enable Collabora
+	execute_occ_command app:enable richdocuments
+	execute_occ_command config:app:set richdocuments wopi_url --value="${COLLABORA_HOST}"
+	execute_occ_command config:app:set richdocuments public_wopi_url --value="${COLLABORA_HOST}"
+	execute_occ_command config:app:set richdocuments enabled --value='yes'
 
 	if [ "${COLLABORA_WOPI_ALLOWLIST}" ]; then
-		ooc config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
+		execute_occ_command config:app:set richdocuments wopi_allowlist --value="${COLLABORA_WOPI_ALLOWLIST}"
 	fi
 
 	if [ "${COLLABORA_SELF_SIGNED}" = "true" ] ; then
-		ooc config:app:set richdocuments disable_certificate_verification --value="yes"
+		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="yes"
 	else
-		ooc config:app:set richdocuments disable_certificate_verification --value="no"
+		execute_occ_command config:app:set richdocuments disable_certificate_verification --value="no"
 	fi
 
-	ooc config:app:set richdocuments edit_groups --value="${COLLABORA_EDIT_GROUPS}"
-	ooc app:enable richdocuments
+	execute_occ_command config:app:set richdocuments edit_groups --value="${COLLABORA_EDIT_GROUPS}"
+	execute_occ_command app:enable richdocuments
 
-	ooc richdocuments:activate-config
+	execute_occ_command richdocuments:activate-config
 }
 
 config_apps() {
-	echo "Configure apps ..."
+	log_info "Configure apps ..."
 
-	echo "Configure viewer app"
-	ooc config:app:set --value yes --type string viewer always_show_viewer
+	log_info "Configure viewer app"
+	execute_occ_command config:app:set --value yes --type string viewer always_show_viewer
 
-	echo "Disable federated sharing"
+	log_info "Disable federated sharing"
 	# To disable entering the user@host ID of an external Nextcloud instance
 	# in the (uncustomized) search input field of the share panel
-	ooc config:app:set --value no files_sharing outgoing_server2server_share_enabled
-	ooc config:app:set --value no files_sharing incoming_server2server_share_enabled
-	ooc config:app:set --value no files_sharing outgoing_server2server_group_share_enabled
-	ooc config:app:set --value no files_sharing incoming_server2server_group_share_enabled
-	ooc config:app:set --value no files_sharing lookupServerEnabled
-	ooc config:app:set --value no files_sharing lookupServerUploadEnabled
+	execute_occ_command config:app:set --value no files_sharing outgoing_server2server_share_enabled
+	execute_occ_command config:app:set --value no files_sharing incoming_server2server_share_enabled
+	execute_occ_command config:app:set --value no files_sharing outgoing_server2server_group_share_enabled
+	execute_occ_command config:app:set --value no files_sharing incoming_server2server_group_share_enabled
+	execute_occ_command config:app:set --value no files_sharing lookupServerEnabled
+	execute_occ_command config:app:set --value no files_sharing lookupServerUploadEnabled
 
-	echo "Configure internal share settings"
+	log_info "Configure internal share settings"
 	# To limit user and group display in the username search field of the
 	# Share panel to list only users with the same group. Groups should not
 	# "see" each other. Users in one contract are part of one group.
-	ooc config:app:set --value="yes" core shareapi_only_share_with_group_members
-	ooc config:app:set --value="no" core shareapi_allow_group_sharing
-	ooc config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
+	execute_occ_command config:app:set --value="yes" core shareapi_only_share_with_group_members
+	execute_occ_command config:app:set --value="no" core shareapi_allow_group_sharing
+	execute_occ_command config:app:set --value='["admin"]' core shareapi_only_share_with_group_members_exclude_group_list
 
-	configure_app_nc_ionos_processes
-	configure_app_serverinfo
+	configure_ionos_processes_app
+	configure_serverinfo_app
 	configure_app_richdocuments
 	configure_app_notify_push
 
-	echo "Configure files app"
-	ooc config:app:set --value yes files crop_image_previews
-	ooc config:app:set --value yes files show_hidden
-	ooc config:app:set --value yes files sort_favorites_first
-	ooc config:app:set --value yes files sort_folders_first
-	ooc config:app:set --value no files grid_view
-	ooc config:app:set --value no files folder_tree
+	log_info "Configure files app"
+	execute_occ_command config:app:set --value yes files crop_image_previews
+	execute_occ_command config:app:set --value yes files show_hidden
+	execute_occ_command config:app:set --value yes files sort_favorites_first
+	execute_occ_command config:app:set --value yes files sort_folders_first
+	execute_occ_command config:app:set --value no files grid_view
+	execute_occ_command config:app:set --value no files folder_tree
 
-	echo "Configure DAV"
-	ooc config:app:set dav system_addressbook_exposed --value="no"
+	log_info "Configure DAV"
+	execute_occ_command config:app:set dav system_addressbook_exposed --value="no"
 }
 
-disable_app() {
+#===============================================================================
+# App Management Functions
+#===============================================================================
+
+# Disable a single HiDrive Next app with error handling
+# Usage: disable_single_app <app_name>
+disable_single_app() {
 	# Disable app and check if it was disabled
 	# Fail if disabling the app failed
 	#
-	app_name="${1}"
-	echo "Disable app '${app_name}' ..."
+	_app_name="${1}"
+	if [ -z "${_app_name}" ]; then
+		log_fatal "App name is required for disable_single_app function"
+	fi
 
-		if ! ooc app:disable "${app_name}"
-		then
-			fail "Disable app \"${app_name}\" failed."
-		fi
+	log_info "Disabling app '${_app_name}'..."
+
+	if ! execute_occ_command app:disable "${_app_name}"
+	then
+		log_fatal "Disable app \"${_app_name}\" failed."
+	fi
 }
 
-disable_apps() {
-	echo "Disable apps"
+# Disable multiple apps based on the DISABLED_APPS list
+# Usage: disable_configured_apps
+disable_configured_apps() {
+	log_info "Processing app disabling..."
 
-	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
+	_enabled_apps=$(execute_occ_command app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 	_disabled_apps_count=0
 
-	for app_name in ${DISABLED_APPS}; do
-		printf "Checking app: %s" "${app_name}"
-		if echo "${_enabled_apps}" | grep -q -w "${app_name}"; then
+	for _app_name in ${DISABLED_APPS}; do
+		printf "[?] Checking app: %s" "${_app_name}"
+		if echo "${_enabled_apps}" | grep -q -w "${_app_name}"; then
 			echo " - currently enabled - disabling"
-			disable_app "${app_name}"
-			_disabled_apps_count=$(( _disabled_apps_count + 1 ))
+			disable_single_app "${_app_name}"
+			_disabled_apps_count=$((_disabled_apps_count + 1))
 		else
 			echo " - not enabled - skip"
 		fi
 	done
 
-	echo "Disabled ${_disabled_apps_count} apps."
+	log_info "Disabled ${_disabled_apps_count} apps."
 }
 
-add_config_partials() {
-	echo "Add config partials ..."
+#===============================================================================
+# Main Execution Function
+#===============================================================================
 
-	cat >"${BDIR}"/../config/app-paths.config.php <<-'EOF'
-		<?php
-		$CONFIG = [
-		  'apps_paths' => [
-		    [
-		      'path' => '/var/www/html/apps',
-		      'url' => '/apps',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-custom',
-		      'url' => '/apps-custom',
-		      'writable' => true,
-		    ],
-		    [
-		      'path' => '/var/www/html/apps-external',
-		      'url' => '/apps-external',
-		      'writable' => true,
-		    ],
-		  ],
-		];
-	EOF
-}
-
+# Main function to orchestrate HiDrive Next configuration
+# Usage: main [args...]
 main() {
-	checks
+	log_info "Starting HiDrive Next configuration process..."
 
-	_main_status="$( ooc status 2>/dev/null | grep 'installed: ' | sed -r 's/^.*installed: (.+)$/\1/' )"
+	# Perform initial checks
+	check_dependencies
+	verify_nextcloud_installation
 
-	# Parse validation
-	if [ "${_main_status}" != "true" ] && [ "${_main_status}" != false ]; then
-		echo "Error testing Nextcloud install status. This is the output of occ status:"
-		ooc status
-		exit 1
-	elif [ "${_main_status}" != "true" ]; then
-		echo "Nextcloud is not installed, abort"
-		exit 1
-	fi
-
-	add_config_partials
-	config_server
+	# Execute configuration steps
+	configure_server_basics
 	config_apps
 	config_ui
 	log_market_config
-	disable_apps
+	disable_configured_apps
 }
 
+# Execute main function with all script arguments
 main "${@}"

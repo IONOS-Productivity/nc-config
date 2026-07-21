@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # List of ./apps to be always enabled.
 # Managed as include file so that it can be used in various scripts.
 export ENABLED_CORE_APPS="admin_audit

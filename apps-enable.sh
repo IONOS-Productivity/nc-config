@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # This script assumes to be located in /IONOS as submodule within the Nextcloud server
 # repository.
 
@@ -10,27 +14,31 @@ NEXTCLOUD_DIR="${BDIR}/.."
 . ${BDIR}/enabled-core-apps.inc.sh
 . ${BDIR}/disabled-apps.inc.sh
 
-ooc() {
+execute_occ_command() {
 	php "${NEXTCLOUD_DIR}/occ" \
 		"${@}"
 }
 
-fail() {
-	echo "${*}"
+# Log fatal error message and exit with failure code
+# Usage: log_fatal <message>
+log_fatal() {
+	echo "\033[1;31m[x] Fatal Error: ${*}\033[0m" >&2
 	exit 1
 }
 
 enable_app() {
 	# Enable app and check if it was enabled
-	# Fail if enabling the app failed
+	# Return 1 if enabling the app failed, 0 if successful
 	#
 	app_name="${1}"
 	echo "Enable app '${app_name}' ..."
 
-		if ! ooc app:enable "${app_name}"
+		if ! execute_occ_command app:enable "${app_name}"
 		then
-			fail "Enabling app \"${app_name}\" failed."
+			echo "ERROR: Enabling app \"${app_name}\" failed."
+			return 1
 		fi
+		return 0
 }
 
 disable_app() {
@@ -40,9 +48,9 @@ disable_app() {
 	app_name="${1}"
 	echo "Disable app '${app_name}' ..."
 
-		if ! ooc app:disable "${app_name}"
+		if ! execute_occ_command app:disable "${app_name}"
 		then
-			fail "Disable app \"${app_name}\" failed."
+			log_fatal "Disable app \"${app_name}\" failed."
 		fi
 }
 
@@ -52,12 +60,14 @@ enable_apps() {
 	apps_dir="${1}"
 	_enabled_apps_count=0
 	_disabled_apps_count=0
+	_failed_apps_count=0
+	_failed_apps_list=""
 
 	if [ ! -d "${apps_dir}" ]; then
-		fail "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
+		log_fatal "Apps directory does not exist: $( readlink -f "${apps_dir}" )"
 	fi
 
-	_enabled_apps=$(./occ app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
+	_enabled_apps=$(execute_occ_command app:list --enabled --output json | jq -j '.enabled | keys | join("\n")')
 
 	for app in $( find "${apps_dir}" -mindepth 1 -maxdepth 1 -type d | sort); do
 		app_name="$( basename "${app}" )"
@@ -81,14 +91,25 @@ enable_apps() {
 			fi
 
 			echo " - currently disabled - enabling"
-			enable_app "${app_name}"
-			_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+			if enable_app "${app_name}"; then
+				_enabled_apps_count=$(( _enabled_apps_count + 1 ))
+			else
+				_failed_apps_count=$(( _failed_apps_count + 1 ))
+				if [ -z "${_failed_apps_list}" ]; then
+					_failed_apps_list="${app_name}"
+				else
+					_failed_apps_list="${_failed_apps_list}, ${app_name}"
+				fi
+			fi
 		fi
 	done
 
 	echo
 	echo "Enabled ${_enabled_apps_count} apps in ${apps_dir}"
 	echo "Disabled ${_disabled_apps_count} apps in ${apps_dir}"
+	if [ "${_failed_apps_count}" -gt 0 ]; then
+		log_fatal "PANIC: Failed to enable ${_failed_apps_count} apps in ${apps_dir}: ${_failed_apps_list}"
+	fi
 	echo
 }
 
@@ -99,7 +120,7 @@ enable_core_apps() {
 
 	echo "Check required core apps are enabled..."
 
-	disabled_apps=$(./occ app:list --disabled --output json | jq -j '.disabled | keys | join("\n")')
+	disabled_apps=$(execute_occ_command app:list --disabled --output json | jq -j '.disabled | keys | join("\n")')
 
 	if [ -z "${disabled_apps}" ]; then
 		echo "No disabled apps found."
@@ -130,7 +151,7 @@ enable_core_apps() {
 
 main() {
 	if ! jq --version 2>&1 >/dev/null; then
-		fail "Error: jq is required"
+		log_fatal "Error: jq is required"
 	fi
 
 	echo "Enable all apps in 'apps-external' folder"

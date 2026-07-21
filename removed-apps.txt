@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Apps to exclude from the final hidrivenext-server.zip package.
+#
+# One app name per line. The Makefile prefixes each entry with "apps/" and
+# passes them as -x exclusion patterns to the zip command.
+#
+# Lines starting with "#" and blank lines are ignored.
+#
+# Example:
+#   bruteforcesettings
+#   user_status

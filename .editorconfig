@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 root = true
 
 [*]
@@ -6,8 +9,25 @@ end_of_line = lf
 indent_size = 4
 indent_style = tab
 insert_final_newline = true
-max_line_length = 120
 tab_width = 4
 
 [{*.bash,*.sh,*.zsh}]
 indent_size = 2
+
+[{*.json,*.md}]
+indent_size = 2
+indent_style = space
+
+[*.list]
+# List files: one item per line, shell-style comments with #
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+
+[{*.yaml,*.yml}]
+indent_size = 2
+indent_style = space
+
+[LICENSES/**]
+insert_final_newline = unset
+indent_style = unset

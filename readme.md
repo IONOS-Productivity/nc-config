@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 STRATO GmbH
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 # IONOS HiDrive Next configuration
 
 ## Building apps and themes for local development
@@ -11,4 +15,3 @@ make -f IONOS/Makefile build_locally
 ```bash
 make -f IONOS/Makefile build_release
 ```
-

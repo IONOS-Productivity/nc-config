@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: 2024 Kai Henseler <kai.henseler@strato.de>
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-TARGET_PACKAGE_NAME=hidrivenext-server.zip
+# Build configuration
+TARGET_PACKAGE_NAME = hidrivenext-server.zip
 
-# Architecture configuration
 ARCHITECTURE = x86_64
 
 # Variables for notify_push binary
@@ -13,18 +13,60 @@ NOTIFY_PUSH_BINARY = $(NOTIFY_PUSH_BIN_DIR)/notify_push
 NOTIFY_PUSH_VERSION = $(shell cd $(NOTIFY_PUSH_DIR) && grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
 NOTIFY_PUSH_URL = https://github.com/nextcloud/notify_push/releases/download/v$(NOTIFY_PUSH_VERSION)/notify_push-$(ARCHITECTURE)-unknown-linux-musl
 
+# Common build commands
+COMPOSER_INSTALL = composer install --no-dev -o --no-interaction
+NPM_INSTALL      = npm ci --prefer-offline --no-audit
+NPM_BUILD        = npm run build
+
+# App category lists — drive .build_deps and generate_apps_matrix_json
+# apps-custom/ — npm only (no composer)
+CUSTOM_NPM_APPS = simplesettings
+# apps-custom/ — composer only (no npm, even if package.json present)
+CUSTOM_COMPOSER_APPS = nc_ionos_processes
+# apps-external/ — full build (composer + npm)
+EXTERNAL_FULL_APPS = richdocuments user_oidc viewer
+# Apps with special build targets (not in the standard categories above)
+# These apps have dedicated build_<app>_app targets with custom build logic
+SPECIAL_BUILD_APPS = nc_theming nc-ionos-theme notify_push
+
+# Metadata for generate_apps_matrix_json: "name|path|has_npm|has_composer"
+# One entry per app in SPECIAL_BUILD_APPS — must be kept in sync.
+SPECIAL_BUILD_APPS_META = \
+	"nc_theming|apps-custom/nc_theming|false|true" \
+	"nc-ionos-theme|themes/nc-ionos-theme|true|false" \
+	"notify_push|apps-external/notify_push|false|true"
+
+# App folders to add to shipped.json (makes apps non-removable)
+# Add additional app folders here to include them in the shipped apps list
+APP_FOLDERS_TO_SHIP = \
+	apps-external \
+	apps-custom
+
+# Apps to be removed from final package (read from removed-apps.txt)
+REMOVE_UNWANTED_APPS = $(shell [ -f IONOS/removed-apps.txt ] && sed '/^#/d;/^$$/d;s/^/apps\//' IONOS/removed-apps.txt || echo "")
+
+# Generate build target lists dynamically from category lists
+CUSTOM_NPM_TARGETS      = $(patsubst %,build_%_app,$(CUSTOM_NPM_APPS))
+CUSTOM_COMPOSER_TARGETS = $(patsubst %,build_%_app,$(CUSTOM_COMPOSER_APPS))
+EXTERNAL_FULL_TARGETS   = $(patsubst %,build_%_app,$(EXTERNAL_FULL_APPS))
+SPECIAL_BUILD_TARGETS   = $(patsubst %,build_%_app,$(SPECIAL_BUILD_APPS))
+
 # Core build targets
-.PHONY: help clean .remove_node_modules
+.PHONY: help clean .precheck
 # Main Nextcloud build
-.PHONY: build_nextcloud
-# Applications
-.PHONY: build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_viewer_app build_richdocuments_app build_dep_theming_app build_notify_push_app build_notify_push_binary
-# Themes
-.PHONY: build_dep_ionos_theme
+.PHONY: build_nextcloud build_nextcloud_dev
+# Applications — dynamically derived from category lists
+.PHONY: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
 # Configuration and packaging
 .PHONY: add_config_partials patch_shipped_json version.json zip_dependencies
 # Meta targets
 .PHONY: .build_deps build_release build_locally
+# Pipeline targets for CI workflow
+.PHONY: build_after_external_apps package_after_build
+# CI matrix generation
+.PHONY: generate_apps_matrix_json
+# Validation targets
+.PHONY: validate_app_list_uniqueness validate_external_apps validate_all
 
 # HELP
 # This will output the help for each task
@@ -35,8 +77,62 @@ help: ## This help.
 	@echo "Usage: make [target]"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "Individual app build targets:"
+	@for app in $(CUSTOM_NPM_APPS);      do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-custom npm"; done
+	@for app in $(CUSTOM_COMPOSER_APPS); do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-custom composer"; done
+	@for app in $(EXTERNAL_FULL_APPS);   do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "apps-external composer+npm"; done
+	@for app in $(SPECIAL_BUILD_APPS);   do printf "  \033[36m%-35s\033[0m %s\n" "build_$${app}_app" "special"; done
+
+.precheck:
+	@{ \
+		if [ ! -d "apps-external" ] || [ ! -d "apps-custom" ]; then \
+			echo ""; \
+			echo "**********************************************************************"; \
+			echo "ERROR: apps-external/ or apps-custom/ not found!"; \
+			echo ""; \
+			echo "Run this Makefile from the Nextcloud project root:"; \
+			echo "  make -f IONOS/Makefile <target>"; \
+			echo "**********************************************************************"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+		if ! test -f "version.php" || ! test -d "lib" || ! test -d "core"; then \
+			echo ""; \
+			echo "**********************************************************************"; \
+			echo "ERROR: Not a valid Nextcloud project directory."; \
+			echo ""; \
+			echo "Run this Makefile from the Nextcloud project root:"; \
+			echo "  make -f IONOS/Makefile <target>"; \
+			echo "**********************************************************************"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+		if ! command -v jq >/dev/null 2>&1; then \
+			echo ""; \
+			echo "**********************************************************************"; \
+			echo "ERROR: jq is not installed!"; \
+			echo ""; \
+			echo "Please install jq:"; \
+			echo "  Ubuntu/Debian: sudo apt-get install jq"; \
+			echo "  macOS: brew install jq"; \
+			echo "  Other: https://jqlang.github.io/jq/download/"; \
+			echo "**********************************************************************"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+	} >&2
+
+clean: ## Clean up build artifacts
+	@echo "[i] Cleaning build artifacts..."
+	rm -rf node_modules
+	rm -f version.json
+	rm -f .buildnumber
+	rm -f $(TARGET_PACKAGE_NAME)
+	@echo "[✓] Clean completed"
 
 .remove_node_modules: ## Remove node_modules
+	@echo "[i] Removing node_modules directories..."
 	rm -rf node_modules
 
 
@@ -54,54 +150,93 @@ build_nextcloud_dev:  ## Build HiDrive Next only for development
 	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
 	@echo "[i] HiDrive Next built for dev"
 
-build_dep_simplesettings_app: ## Install and build simplesettings app
-	cd apps-custom/simplesettings && \
-	npm ci && \
-	npm run build
+# Common macros for standard build categories
+define build_custom_npm_app
+	@echo "[i] Building $(1) app..."
+	@cd apps-custom/$(1) && $(NPM_INSTALL) && $(NPM_BUILD)
+	@echo "[✓] $(1) app built successfully"
+endef
 
-build_dep_nc_ionos_processes_app: ## Install nc_ionos_processes app
-	cd apps-custom/nc_ionos_processes && \
-	composer install --no-dev -o
+define build_custom_composer_app
+	@echo "[i] Building $(1) app..."
+	@cd apps-custom/$(1) && $(COMPOSER_INSTALL)
+	@echo "[✓] $(1) app built successfully"
+endef
 
-build_dep_user_oidc_app: ## Install and build user_oidc app
-	cd apps-external/user_oidc && \
-	composer install --no-dev -o && \
-	npm ci && \
-	npm run build
+define build_external_full_app
+	@echo "[i] Building $(1) app..."
+	@cd apps-external/$(1) && $(COMPOSER_INSTALL) && $(NPM_INSTALL) && $(NPM_BUILD)
+	@echo "[✓] $(1) app built successfully"
+endef
 
-build_dep_viewer_app: ## Install and build viewer app
-	cd apps-external/viewer && \
-	composer install --no-dev -o && \
-	npm ci && \
-	npm run build
+# Dynamic rules for standard categories
+$(CUSTOM_NPM_TARGETS): build_%_app:
+	$(call build_custom_npm_app,$(patsubst build_%_app,%,$@))
 
-build_richdocuments_app: ## Install and build richdocuments viewer app
-	cd apps-external/richdocuments && \
-	composer install --no-dev -o && \
-	npm ci && \
-	npm run build
+$(CUSTOM_COMPOSER_TARGETS): build_%_app:
+	$(call build_custom_composer_app,$(patsubst build_%_app,%,$@))
 
-build_dep_ionos_theme: ## Install and build ionos theme
-	cd themes/nc-ionos-theme/IONOS && \
-	npm ci && \
-	npm run build
+$(EXTERNAL_FULL_TARGETS): build_%_app:
+	$(call build_external_full_app,$(patsubst build_%_app,%,$@))
 
-build_dep_theming_app: ## Build the custom css
+# Special build targets — custom logic that doesn't fit the standard categories
+
+build_nc_theming_app: ## Build the custom css
+	@echo "[i] Building nc_theming app..."
 	cd apps-custom/nc_theming && \
-	make build_css
+	$(MAKE) build_css
+	@echo "[✓] nc_theming app built successfully"
 
-add_config_partials: ## Copy custom config files to Nextcloud config
+build_nc-ionos-theme_app: ## Install and build ionos theme
+	@echo "[i] Building nc-ionos-theme app..."
+	cd themes/nc-ionos-theme/IONOS && \
+	$(NPM_INSTALL) && \
+	$(NPM_BUILD)
+	@echo "[✓] nc-ionos-theme app built successfully"
+
+# notify_push binary target: downloads the pre-built binary from GitHub releases
+$(NOTIFY_PUSH_BINARY): $(NOTIFY_PUSH_DIR)/appinfo/info.xml
+	@echo "[i] Building notify_push binary target for version $(NOTIFY_PUSH_VERSION)..."
+	@mkdir -p $(NOTIFY_PUSH_BIN_DIR)
+	@echo "[i] Downloading notify_push binary version $(NOTIFY_PUSH_VERSION)..."
+	curl -L -o $@ $(NOTIFY_PUSH_URL)
+	@echo "[i] Verifying binary integrity..."
+	@sha256sum $@ > $@.sha256
+	@echo "[i] Binary SHA256: $$(sha256sum $@ | cut -d' ' -f1)"
+	chmod +x $@
+	@echo "[i] notify_push binary v$(NOTIFY_PUSH_VERSION) downloaded and verified successfully"
+
+$(NOTIFY_PUSH_DIR)/vendor/autoload.php: $(NOTIFY_PUSH_DIR)/composer.json
+	@echo "[i] Installing notify_push PHP dependencies..."
+	cd $(NOTIFY_PUSH_DIR) && composer install --no-dev -o
+
+build_notify_push_app: $(NOTIFY_PUSH_DIR)/vendor/autoload.php $(NOTIFY_PUSH_BINARY) ## Install and build notify_push app
+	@echo "[✓] notify_push app built successfully"
+
+build_notify_push_binary: $(NOTIFY_PUSH_BINARY) ## Download notify_push binary
+	@echo "[i] notify_push binary ready"
+
+add_config_partials: .precheck ## Copy custom config files to Nextcloud config
+	@echo "[i] Copying config files..."
 	cp IONOS/configs/*.config.php config/
+	@echo "[✓] Config files copied successfully"
 
-patch_shipped_json: ## Patch shipped.json to make core apps disableable
+patch_shipped_json: .precheck ## Patch shipped.json
+	@echo "[i] Patching shipped.json..."
+
+	@echo "[i] Making external apps non-removable (hiding remove buttons)..."
+	IONOS/scripts/patch_shipped_json_add_shipped_apps.sh $(APP_FOLDERS_TO_SHIP)
+
+	@echo "[i] Making core apps disableable and enforcing always-enabled apps..."
 	IONOS/apps-disable.sh
 
-version.json: ## Generate version file
+version.json: .precheck ## Generate version file
+	@echo "[i] Generating version.json..."
 	buildDate=$$(date +%s) && \
 	buildRef=$$(git rev-parse --short HEAD) && \
 	ncVersion=$$(php -r 'include("version.php");echo implode(".", $$OC_Version);') && \
 	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef  --arg ncVersion $$ncVersion '{buildDate: $$buildDate, buildRef: $$buildRef, ncVersion: $$ncVersion}' > version.json && \
-	echo "version.json created" && \
+	echo "[i] version.json created" && \
 	jq . version.json
 
 zip_dependencies: patch_shipped_json version.json ## Zip relevant files
@@ -158,7 +293,7 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "apps-*/*/composer.phar" \
 	-x "apps-*/*/.tx" \
 	-x "apps-*/*/.github" \
-	-x "apps-*/*/src**" \
+	-x "apps-*/*/src" \
 	-x "apps-*/*/node_modules**" \
 	-x "apps-*/*/vendor-bin**" \
 	-x "apps-*/*/tests**" \
@@ -172,34 +307,68 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "package.json" \
 	-x "package-lock.json" \
 	-x "themes/nc-ionos-theme/README.md" \
-	-x "themes/nc-ionos-theme/IONOS**"
+	-x "themes/nc-ionos-theme/IONOS**" \
+	$(foreach app,$(REMOVE_UNWANTED_APPS),-x "$(app)/*")
+	@echo "[i] Package $(TARGET_PACKAGE_NAME) created successfully"
 
-# notify_push binary target: downloads the pre-built binary from GitHub releases
-$(NOTIFY_PUSH_BINARY): $(NOTIFY_PUSH_DIR)/appinfo/info.xml
-	@echo "[i] Building notify_push binary target for version $(NOTIFY_PUSH_VERSION)..."
-	@mkdir -p $(NOTIFY_PUSH_BIN_DIR)
-	@echo "[i] Downloading notify_push binary version $(NOTIFY_PUSH_VERSION)..."
-	curl -L -o $@ $(NOTIFY_PUSH_URL)
-	@echo "[i] Verifying binary integrity..."
-	@sha256sum $@ > $@.sha256
-	@echo "[i] Binary SHA256: $$(sha256sum $@ | cut -d' ' -f1)"
-	chmod +x $@
-	@echo "[i] notify_push binary v$(NOTIFY_PUSH_VERSION) downloaded and verified successfully"
+.build_deps: $(CUSTOM_NPM_TARGETS) $(CUSTOM_COMPOSER_TARGETS) $(EXTERNAL_FULL_TARGETS) $(SPECIAL_BUILD_TARGETS)
 
-$(NOTIFY_PUSH_DIR)/vendor/autoload.php: $(NOTIFY_PUSH_DIR)/composer.json
-	@echo "[i] Installing notify_push PHP dependencies..."
-	cd $(NOTIFY_PUSH_DIR) && composer install --no-dev -o
+build_after_external_apps: build_nextcloud add_config_partials ## Build HiDrive Next and add configs after external apps are done
+	@echo "[i] HiDrive Next built and config files added"
 
-build_notify_push_app: $(NOTIFY_PUSH_DIR)/vendor/autoload.php $(NOTIFY_PUSH_BINARY) ## Install and build notify_push app
-	@echo "[✓] notify_push app built successfully"
-
-build_notify_push_binary: $(NOTIFY_PUSH_BINARY) ## Download notify_push binary
-	@echo "[i] notify_push binary ready"
-
-.build_deps: build_dep_viewer_app build_richdocuments_app build_dep_simplesettings_app build_dep_nc_ionos_processes_app build_dep_user_oidc_app build_dep_ionos_theme build_dep_theming_app build_notify_push_app
+package_after_build: zip_dependencies ## Create package after build is complete
+	@echo "[i] Package created successfully"
 
 build_release: build_nextcloud .build_deps add_config_partials zip_dependencies ## Build a release package (build apps/themes, copy configs and package)
-	echo "Everything done for a release"
+	@echo "[i] Everything done for a release"
 
-build_locally: .remove_node_modules build_nextcloud .build_deps ## Build all apps/themes for local development
-	echo "Everything done for local/dev"
+build_locally: build_nextcloud_dev .build_deps ## Build all apps/themes for local development
+	@echo "[i] Everything done for local/dev"
+
+validate_app_list_uniqueness: .precheck ## Validate that apps are only in one list and not duplicated by hardcoded targets
+	@IONOS/scripts/validate_app_list_uniqueness.sh \
+		"$(CUSTOM_NPM_APPS)" \
+		"$(CUSTOM_COMPOSER_APPS)" \
+		"$(EXTERNAL_FULL_APPS)" \
+		"$(SPECIAL_BUILD_APPS)" \
+		"$(MAKEFILE_LIST)"
+
+validate_external_apps: .precheck ## Validate and suggest proper categorization for apps-custom/ and apps-external/
+	@IONOS/scripts/validate_external_apps.sh \
+		"$(CUSTOM_NPM_APPS)" \
+		"$(CUSTOM_COMPOSER_APPS)" \
+		"$(EXTERNAL_FULL_APPS)" \
+		"$(SPECIAL_BUILD_APPS)"
+
+validate_all: .precheck ## Run all validation tasks
+	@echo "[i] Running validation..."
+	@$(MAKE) -f IONOS/Makefile validate_app_list_uniqueness
+	@$(MAKE) -f IONOS/Makefile validate_external_apps
+	@echo "[✓] Validation completed successfully"
+
+generate_apps_matrix_json: .precheck ## Generate JSON matrix of buildable apps for the CI pipeline
+	@bash -c ' \
+	emit() { \
+		local app="$$1" path="$$2" has_npm="$$3" has_composer="$$4"; \
+		local npm_lock_path=""; \
+		if [ "$$has_npm" = "true" ]; then \
+			if [ -f "$$path/IONOS/package-lock.json" ]; then \
+				npm_lock_path="$$path/IONOS/package-lock.json"; \
+			else \
+				npm_lock_path="$$path/package-lock.json"; \
+			fi; \
+		fi; \
+		printf "{\"name\":\"%s\",\"path\":\"%s\",\"has_npm\":%s,\"has_composer\":%s,\"npm_lock_path\":\"%s\",\"makefile_target\":\"build_%s_app\",\"needs_custom_npms\":false}\n" \
+			"$$app" "$$path" "$$has_npm" "$$has_composer" "$$npm_lock_path" "$$app"; \
+	}; \
+	for app in $(CUSTOM_NPM_APPS);      do emit "$$app" "apps-custom/$$app"   true  false; done; \
+	for app in $(CUSTOM_COMPOSER_APPS); do emit "$$app" "apps-custom/$$app"   false true;  done; \
+	for app in $(EXTERNAL_FULL_APPS);   do emit "$$app" "apps-external/$$app" true  true;  done; \
+	for meta in $(SPECIAL_BUILD_APPS_META); do \
+		app=$$(echo "$$meta" | cut -d"|" -f1); \
+		path=$$(echo "$$meta" | cut -d"|" -f2); \
+		has_npm=$$(echo "$$meta" | cut -d"|" -f3); \
+		has_composer=$$(echo "$$meta" | cut -d"|" -f4); \
+		emit "$$app" "$$path" "$$has_npm" "$$has_composer"; \
+	done; \
+	' | jq -s 'sort_by(.name)'
