@@ -31,7 +31,7 @@ const PARTIAL = __DIR__ . '/../configs/ionos-links.config.php';
 const PARTIAL_REPO_PATH = 'configs/ionos-links.config.php';
 
 // Markets to exercise: the five real ones plus the fallback paths.
-const MARKETS = ['FR', 'DE', 'ES', 'GB', 'IT', '', 'INVALID_MARKET'];
+const MARKETS = ['FR', 'DE', 'ES', 'UK', 'IT', '', 'INVALID_MARKET'];
 
 // Every key here must resolve to a well-formed https URL for every market.
 // Nested keys are expressed as a path (webmail lives under ionos_peer_products).

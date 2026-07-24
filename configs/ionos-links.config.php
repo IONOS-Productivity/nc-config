@@ -34,7 +34,7 @@ $CONFIG = (static function (): array {
 			'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/0031',
 			'ionos_homepage' => 'https://ionos.es/',
 		],
-		'GB' => [
+		'UK' => [
 			'ionos_peer_products' => [
 				'ionos_webmail_target_link' => 'https://email.ionos.co.uk/',
 			],
