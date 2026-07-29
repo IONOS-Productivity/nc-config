@@ -23,4 +23,5 @@ $CONFIG = [
 	'skeletondirectory' => '',
 	'filelocking.enabled' => true,
 	'filelocking.ttl' => '43200',
+	'snowflake-server-id' => (int)(getenv('NC_SNOWFLAKE_SERVER_ID') ?: 1),
 ];
