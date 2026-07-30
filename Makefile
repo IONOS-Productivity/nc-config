@@ -20,20 +20,19 @@ NPM_BUILD        = npm run build
 
 # App category lists — drive .build_deps and generate_apps_matrix_json
 # apps-custom/ — npm only (no composer)
-CUSTOM_NPM_APPS = simplesettings
+CUSTOM_NPM_APPS = simplesettings simplenavigation
 # apps-custom/ — composer only (no npm, even if package.json present)
 CUSTOM_COMPOSER_APPS = nc_ionos_processes
 # apps-external/ — full build (composer + npm)
 EXTERNAL_FULL_APPS = richdocuments user_oidc viewer
 # Apps with special build targets (not in the standard categories above)
 # These apps have dedicated build_<app>_app targets with custom build logic
-SPECIAL_BUILD_APPS = nc_theming nc-ionos-theme notify_push
+SPECIAL_BUILD_APPS = nc_theming notify_push
 
 # Metadata for generate_apps_matrix_json: "name|path|has_npm|has_composer"
 # One entry per app in SPECIAL_BUILD_APPS — must be kept in sync.
 SPECIAL_BUILD_APPS_META = \
 	"nc_theming|apps-custom/nc_theming|false|true" \
-	"nc-ionos-theme|themes/nc-ionos-theme|true|false" \
 	"notify_push|apps-external/notify_push|false|true"
 
 # App folders to add to shipped.json (makes apps non-removable)
@@ -187,13 +186,6 @@ build_nc_theming_app: ## Build the custom css
 	$(MAKE) build_css
 	@echo "[✓] nc_theming app built successfully"
 
-build_nc-ionos-theme_app: ## Install and build ionos theme
-	@echo "[i] Building nc-ionos-theme app..."
-	cd themes/nc-ionos-theme/IONOS && \
-	$(NPM_INSTALL) && \
-	$(NPM_BUILD)
-	@echo "[✓] nc-ionos-theme app built successfully"
-
 # notify_push binary target: downloads the pre-built binary from GitHub releases
 $(NOTIFY_PUSH_BINARY): $(NOTIFY_PUSH_DIR)/appinfo/info.xml
 	@echo "[i] Building notify_push binary target for version $(NOTIFY_PUSH_VERSION)..."
@@ -306,8 +298,6 @@ zip_dependencies: patch_shipped_json version.json ## Zip relevant files
 	-x "composer.phar" \
 	-x "package.json" \
 	-x "package-lock.json" \
-	-x "themes/nc-ionos-theme/README.md" \
-	-x "themes/nc-ionos-theme/IONOS**" \
 	$(foreach app,$(REMOVE_UNWANTED_APPS),-x "$(app)/*")
 	@echo "[i] Package $(TARGET_PACKAGE_NAME) created successfully"
 
