@@ -187,7 +187,7 @@ configure_app_notify_push() {
 	_base_url=$(execute_occ_command config:system:get overwrite.cli.url)
 
 	if [ -z "${_base_url}" ]; then
-		echo "\033[1;33mWarning: Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured.\033[0m"
+		log_warning "Base URL (overwrite.cli.url) is not set. notify_push base_endpoint cannot be configured."
 		return 0
 	fi
 
