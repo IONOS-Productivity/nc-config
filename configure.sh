@@ -22,6 +22,7 @@
 # - IONOS_PROCESSES_USER: Username for IONOS processes API
 # - IONOS_PROCESSES_PASS: Password for IONOS processes API
 # - NC_APP_SERVERINFO_TOKEN: Token for serverinfo app
+# - REDIS_HOST_PASSWORD: Redis password; notify_push stays disabled when unset
 # - COLLABORA_HOST: Collabora server host URL
 # - COLLABORA_EDIT_GROUPS: Groups allowed to edit in Collabora
 # - COLLABORA_SELF_SIGNED: Set to "true" for self-signed certificates
@@ -181,6 +182,15 @@ configure_serverinfo_app() {
 # Usage: configure_notify_push_app
 configure_app_notify_push() {
 	log_info "Configuring notify_push app..."
+
+	disable_single_app notify_push
+
+	# Check required environment variables
+	if [ -z "${REDIS_HOST_PASSWORD}" ]; then
+		log_warning "REDIS_HOST_PASSWORD not set, skipping configuration of notify_push app"
+		return 0
+	fi
+
 	execute_occ_command app:enable notify_push
 
 	log_info "Retrieving base URL for notify_push endpoint..."
