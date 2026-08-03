@@ -244,6 +244,8 @@ configure_app_richdocuments() {
 config_apps() {
 	log_info "Configure apps ..."
 
+	configure_app_notify_push
+
 	log_info "Configure viewer app"
 	execute_occ_command config:app:set --value yes --type string viewer always_show_viewer
 
@@ -268,7 +270,6 @@ config_apps() {
 	configure_ionos_processes_app
 	configure_serverinfo_app
 	configure_app_richdocuments
-	configure_app_notify_push
 
 	log_info "Configure files app"
 	execute_occ_command config:app:set --value yes files crop_image_previews
