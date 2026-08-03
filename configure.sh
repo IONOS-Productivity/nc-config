@@ -122,7 +122,7 @@ log_market_config() {
 	# IONOS links are applied declaratively via the config partials. Read them back
 	# here (config:system:get only) so the resulting MARKET and URLs show up in the
 	# pod log for troubleshooting.
-	echo "MARKET=${MARKET:-<unset>} — effective IONOS links:"
+	log_info "MARKET=${MARKET:-<unset>} — effective IONOS links:"
 	echo "  ionos_webmail_target_link = $(execute_occ_command config:system:get ionos_peer_products ionos_webmail_target_link)"
 	for _key in ionos_help_target_link ionos_customclient_android ionos_customclient_ios ionos_homepage; do
 		echo "  ${_key} = $(execute_occ_command config:system:get "${_key}")"
@@ -130,7 +130,7 @@ log_market_config() {
 }
 
 config_ui() {
-	echo "Configure theming"
+	log_info "Configure theming"
 
 	execute_occ_command theming:config name "HiDrive Next"
 	execute_occ_command theming:config slogan "powered by IONOS"
@@ -180,10 +180,10 @@ configure_serverinfo_app() {
 # Configure notify_push app
 # Usage: configure_notify_push_app
 configure_app_notify_push() {
-	echo "Configuring notify_push app..."
+	log_info "Configuring notify_push app..."
 	execute_occ_command app:enable notify_push
 
-	echo "Retrieving base URL for notify_push endpoint..."
+	log_info "Retrieving base URL for notify_push endpoint..."
 	_base_url=$(execute_occ_command config:system:get overwrite.cli.url)
 
 	if [ -z "${_base_url}" ]; then
@@ -192,7 +192,7 @@ configure_app_notify_push() {
 	fi
 
 	_notify_push_endpoint="${_base_url}/push"
-	echo "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
+	log_info "Setting notify_push base_endpoint: ${_notify_push_endpoint}"
 
 	execute_occ_command config:app:set --value "${_notify_push_endpoint}" --type string -- notify_push base_endpoint
 }
