@@ -10,6 +10,7 @@ $CONFIG = [
 	'htaccess.RewriteBase' => '/',
 	'forwarded_for_headers' => [ '0' => 'HTTP_X_FORWARDED_FOR' ],
 	'auth.bruteforce.protection.enabled' => true,
+	'auth.storeCryptedPassword' => false,
 	'simpleSignUpLink.shown' => false,
 	'files_external_allow_create_new_local' => false,
 	'allow_local_remote_servers' => true,
