@@ -57,11 +57,43 @@ DISABLED_APPS=$( read_app_list "${SCRIPT_DIR}/disabled-apps.list" )
 # Utility Functions
 #===============================================================================
 
+#
+# OCC Helper Conventions — Sensitive Data
+# ----------------------------------------
+#   execute_occ_command <subcommand> [args...]
+#     General purpose. For commands that do NOT carry secrets.
+#     Use execute_occ_secret_command for any command where an argument may be sensitive.
+#
+#   execute_occ_secret_command <subcommand> [args...]
+#     For OCC commands that carry secrets. Arguments are NOT logged on failure to
+#     prevent accidental secret exposure. Only the subcommand name is recorded.
+#
+# Rule: always call execute_occ_secret_command directly for sensitive commands.
+
 # Execute NextCloud OCC command with error handling
 # Usage: execute_occ_command <command> [args...]
 execute_occ_command() {
+	# Safety net: --secret/--sensitive means a secret is in the args; delegate to execute_occ_secret_command.
+	# Must run before any logging that would expose ${*}.
+	if echo "${*}" | grep -qE -- "--secret|--sensitive"; then
+		log_warning "execute_occ_command called with --secret/--sensitive; use execute_occ_secret_command instead. Delegating."
+		execute_occ_secret_command "${@}"
+		return $?
+	fi
+
 	if ! php occ "${@}"; then
 		log_error "Failed to execute OCC command: ${*}"
+		return 1
+	fi
+}
+
+# Execute any OCC command that contains sensitive data.
+# Arguments are NOT logged on failure to prevent accidental secret exposure.
+# Only the subcommand name is recorded.
+# Usage: execute_occ_secret_command <subcommand> [args...]
+execute_occ_secret_command() {
+	if ! php occ "${@}"; then
+		log_error "Failed to execute sensitive OCC command: ${1} [args not logged]"
 		return 1
 	fi
 }
@@ -176,7 +208,7 @@ configure_ionos_processes_app() {
 
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
-	execute_occ_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
+	execute_occ_secret_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
 # Configure serverinfo app with authentication token
@@ -189,7 +221,7 @@ configure_serverinfo_app() {
 		return 0
 	fi
 
-	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
+	execute_occ_secret_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
 # Configure notify_push app
