@@ -11,6 +11,32 @@ log_fatal() {
 	exit 1
 }
 
+# Log warning message
+# Usage: log_warning <message>
+log_warning() {
+	echo "\033[1;33m[w] Warning: ${*}\033[0m" >/dev/stderr
+}
+
+# Validate required environment variables
+# Usage: validate_env_vars <var1> <var2> ...
+# Returns: 0 if all variables are set, 1 otherwise
+validate_env_vars() {
+	_validation_failed=false
+
+	for _var in "${@}"; do
+		eval "_value=\${${_var}}"
+		if [ -z "${_value}" ]; then
+			log_warning "${_var} environment variable is not set"
+			_validation_failed=true
+		fi
+	done
+
+	if [ "${_validation_failed}" = "true" ]; then
+		return 1
+	fi
+	return 0
+}
+
 # Returns the end-session endpoint URI for the given INSTANCE_TYPE and MARKET.
 endsessionendpointuri() {
 	case "${INSTANCE_TYPE}:${MARKET}" in
@@ -98,42 +124,19 @@ main() {
 		log_fatal "jq not found"
 	fi
 
-	if [ -z "${ENC_OIDC_PROVIDER_IDENTIFIER}" ]; then
-		log_fatal "ENC_OIDC_PROVIDER_IDENTIFIER not set"
-	fi
-
-	if [ -z "${ENC_OIDC_CLIENT_ID}" ]; then
-		log_fatal "ENC_OIDC_CLIENT_ID not set"
-	fi
-
-	if [ -z "${ENC_OIDC_SECRET}" ]; then
-		log_fatal "ENC_OIDC_SECRET not set"
-	fi
-
-	if [ -z "${ENC_OIDC_DISCOVERY_URI}" ]; then
-		log_fatal "ENC_OIDC_DISCOVERY_URI not set"
-	fi
-
-	if [ -z "${ENC_OIDC_EXTRA_CLAIMS}" ]; then
-		log_fatal "ENC_OIDC_EXTRA_CLAIMS not set"
-	fi
-
-	if [ -z "${ENC_OIDC_MAPPING_UID}" ]; then
-		log_fatal "ENC_OIDC_MAPPING_UID not set"
-	fi
-
-	if [ -z "${ENC_OIDC_SCOPES}" ]; then
-		log_fatal "ENC_OIDC_SCOPES not set"
-	fi
-
-	if [ -z "${INSTANCE_TYPE}" ]; then
-		log_fatal "INSTANCE_TYPE not set"
+	if ! validate_env_vars \
+		ENC_OIDC_PROVIDER_IDENTIFIER \
+		ENC_OIDC_CLIENT_ID \
+		ENC_OIDC_SECRET \
+		ENC_OIDC_DISCOVERY_URI \
+		ENC_OIDC_EXTRA_CLAIMS \
+		ENC_OIDC_MAPPING_UID \
+		ENC_OIDC_SCOPES \
+		INSTANCE_TYPE \
+		MARKET; then
+		log_fatal "required user_oidc environment variables are not set"
 	fi
 	INSTANCE_TYPE=$(printf '%s' "${INSTANCE_TYPE}" | tr '[:lower:]' '[:upper:]')
-
-	if [ -z "${MARKET}" ]; then
-		log_fatal "MARKET not set"
-	fi
 	MARKET=$(printf '%s' "${MARKET}" | tr '[:lower:]' '[:upper:]')
 
 	if ! configure_user_oidc; then
