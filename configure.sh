@@ -97,6 +97,10 @@ check_dependencies() {
 	if ! which php >/dev/null 2>&1; then
 		log_fatal "php is required but not found in PATH"
 	fi
+
+	if ! which jq >/dev/null 2>&1; then
+		log_fatal "jq is required but not found in PATH"
+	fi
 }
 
 # Verify HiDrive Next installation status
