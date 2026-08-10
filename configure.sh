@@ -123,6 +123,26 @@ log_info() {
 	echo "[i] ${*}"
 }
 
+# Validate required environment variables
+# Usage: validate_env_vars <var1> <var2> ...
+# Returns: 0 if all variables are set, 1 otherwise
+validate_env_vars() {
+	_validation_failed=false
+
+	for _var in "${@}"; do
+		eval "_value=\${${_var}}"
+		if [ -z "${_value}" ]; then
+			log_warning "${_var} environment variable is not set"
+			_validation_failed=true
+		fi
+	done
+
+	if [ "${_validation_failed}" = "true" ]; then
+		return 1
+	fi
+	return 0
+}
+
 # Check if required dependencies are available
 # Usage: check_dependencies
 check_dependencies() {
@@ -200,9 +220,8 @@ config_ui() {
 configure_ionos_processes_app() {
 	log_info "Configuring nc_ionos_processes app..."
 
-	# Check required environment variables
-	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
-		log_warning "IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app"
+	if ! validate_env_vars IONOS_PROCESSES_API_URL IONOS_PROCESSES_USER IONOS_PROCESSES_PASS; then
+		log_warning "skipping configuration of nc_ionos_processes app"
 		return 0
 	fi
 
@@ -256,13 +275,8 @@ configure_app_notify_push() {
 configure_app_richdocuments() {
 	execute_occ_command app:disable richdocuments
 
-	# Validate required environment variables
-	if ! [ "${COLLABORA_HOST}" ]; then
-		log_fatal "COLLABORA_HOST environment variable is not set"
-	fi
-
-	if ! [ "${COLLABORA_EDIT_GROUPS}" ]; then
-		log_fatal "COLLABORA_EDIT_GROUPS environment variable is not set"
+	if ! validate_env_vars COLLABORA_HOST COLLABORA_EDIT_GROUPS; then
+		log_fatal "required Collabora environment variables are not set"
 	fi
 
 	# Configure and enable Collabora
