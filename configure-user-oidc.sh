@@ -47,7 +47,7 @@ configure_user_oidc() {
 
 	if [ -z "${end_session_uri}" ] || [ -z "${post_logout_uri}" ]; then
 		if [ "${INSTANCE_TYPE}" != "DEV" ]; then
-			fail "No logout URIs for INSTANCE_TYPE=${INSTANCE_TYPE} MARKET=${MARKET}"
+			log_fatal "No logout URIs for INSTANCE_TYPE=${INSTANCE_TYPE} MARKET=${MARKET}"
 		fi
 	fi
 
@@ -127,12 +127,12 @@ main() {
 	fi
 
 	if [ -z "${INSTANCE_TYPE}" ]; then
-		fail "INSTANCE_TYPE not set"
+		log_fatal "INSTANCE_TYPE not set"
 	fi
 	INSTANCE_TYPE=$(printf '%s' "${INSTANCE_TYPE}" | tr '[:lower:]' '[:upper:]')
 
 	if [ -z "${MARKET}" ]; then
-		fail "MARKET not set"
+		log_fatal "MARKET not set"
 	fi
 	MARKET=$(printf '%s' "${MARKET}" | tr '[:lower:]' '[:upper:]')
 
