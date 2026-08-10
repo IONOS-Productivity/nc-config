@@ -40,8 +40,18 @@ readonly FAVICON_DIR
 readonly ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
-# Load disabled apps configuration
-. "${SCRIPT_DIR}/disabled-apps.inc.sh"
+# Read app list from file, ignoring comments and empty lines
+# Usage: read_app_list <file_path>
+read_app_list() {
+	_list_file="${1}"
+	if [ ! -f "${_list_file}" ]; then
+		echo ""
+		return
+	fi
+	grep -v '^[[:space:]]*#' "${_list_file}" | grep -v '^[[:space:]]*$' | tr '\n' ' '
+}
+
+DISABLED_APPS=$( read_app_list "${SCRIPT_DIR}/disabled-apps.list" )
 
 #===============================================================================
 # Utility Functions

@@ -11,8 +11,19 @@ BDIR="$( dirname "${0}" )"
 
 NEXTCLOUD_DIR="${BDIR}/.."
 
-. ${BDIR}/enabled-core-apps.inc.sh
-. ${BDIR}/disabled-apps.inc.sh
+# Read app list from file, ignoring comments and empty lines
+# Usage: read_app_list <file_path>
+read_app_list() {
+	_list_file="${1}"
+	if [ ! -f "${_list_file}" ]; then
+		echo ""
+		return
+	fi
+	grep -v '^[[:space:]]*#' "${_list_file}" | grep -v '^[[:space:]]*$' | tr '\n' ' '
+}
+
+ENABLED_CORE_APPS=$( read_app_list "${BDIR}/enabled-core-apps.list" )
+DISABLED_APPS=$( read_app_list "${BDIR}/disabled-apps.list" )
 
 execute_occ_command() {
 	php "${NEXTCLOUD_DIR}/occ" \

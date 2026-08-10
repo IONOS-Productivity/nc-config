@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2025 STRATO GmbH
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+################################################################################
+# Always Enabled Apps List
+################################################################################
+#
+# This file contains a list of Nextcloud apps that should be added to the
+# 'alwaysEnabled' array in core/shipped.json, ensuring they cannot be
+# disabled by administrators.
+#
+# Format:
+#   - One app name per line
+#   - Lines starting with # are comments
+#   - Empty lines are ignored
+#   - Whitespace is trimmed
+#
+# This list is currently empty: no HiDrive Next apps have been decided as
+# always-enabled yet. Add entries here deliberately, on a case-by-case basis.
+################################################################################
