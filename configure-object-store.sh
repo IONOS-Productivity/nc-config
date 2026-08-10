@@ -13,6 +13,32 @@ log_fatal() {
 	exit 1
 }
 
+# Log warning message
+# Usage: log_warning <message>
+log_warning() {
+	echo "\033[1;33m[w] Warning: ${*}\033[0m" >/dev/stderr
+}
+
+# Validate required environment variables
+# Usage: validate_env_vars <var1> <var2> ...
+# Returns: 0 if all variables are set, 1 otherwise
+validate_env_vars() {
+	_validation_failed=false
+
+	for _var in "${@}"; do
+		eval "_value=\${${_var}}"
+		if [ -z "${_value}" ]; then
+			log_warning "${_var} environment variable is not set"
+			_validation_failed=true
+		fi
+	done
+
+	if [ "${_validation_failed}" = "true" ]; then
+		return 1
+	fi
+	return 0
+}
+
 write_config_file() {
 	config="${NEXTCLOUD_ROOT_DIR}/config/object-store.config.php"
 
@@ -63,28 +89,14 @@ main() {
 		log_fatal "occ command not found, are you in Nextcloud's root dir?"
 	fi
 
-	if [ -z "${ENC_OBJECT_STORAGE_BUCKET_NAME}" ]; then
-		log_fatal "ENC_OBJECT_STORAGE_BUCKET_NAME not set"
-	fi
-
-	if [ -z "${ENC_OBJECT_STORAGE_ACCESS_KEY}" ]; then
-		log_fatal "ENC_OBJECT_STORAGE_ACCESS_KEY not set"
-	fi
-
-	if [ -z "${ENC_OBJECT_STORAGE_SECRET}" ]; then
-		log_fatal "ENC_OBJECT_STORAGE_SECRET not set"
-	fi
-
-	if [ -z "${ENC_OBJECT_STORAGE_REGION}" ]; then
-		log_fatal "ENC_OBJECT_STORAGE_REGION not set"
-	fi
-
-	if [ -z "${ENC_OBJECT_STORAGE_HOSTNAME}" ]; then
-		log_fatal "ENC_OBJECT_STORAGE_HOSTNAME not set"
-	fi
-
-	if [ -z "${ENC_OBJECT_STORAGE_PORT}" ]; then
-		log_fatal "ENC_OBJECT_STORAGE_PORT not set"
+	if ! validate_env_vars \
+		ENC_OBJECT_STORAGE_BUCKET_NAME \
+		ENC_OBJECT_STORAGE_ACCESS_KEY \
+		ENC_OBJECT_STORAGE_SECRET \
+		ENC_OBJECT_STORAGE_REGION \
+		ENC_OBJECT_STORAGE_HOSTNAME \
+		ENC_OBJECT_STORAGE_PORT; then
+		log_fatal "required object store environment variables are not set"
 	fi
 
 	if [ -n "${ENC_OBJECT_STORAGE_USE_SSL}" ] && [ "${ENC_OBJECT_STORAGE_USE_SSL}" != "true" ] && [ "${ENC_OBJECT_STORAGE_USE_SSL}" != "false" ]; then
