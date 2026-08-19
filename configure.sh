@@ -35,7 +35,7 @@ SCRIPT_DIR="$(dirname "${0}")"
 readonly SCRIPT_DIR
 NEXTCLOUD_DIR="${SCRIPT_DIR}/.."
 readonly NEXTCLOUD_DIR
-FAVICON_DIR="$(cd "${NEXTCLOUD_DIR}/apps-custom/nc_theming/img" && pwd)"
+FAVICON_DIR="$(cd "${NEXTCLOUD_DIR}/apps/theming/img" && pwd)"
 readonly FAVICON_DIR
 readonly ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
@@ -200,7 +200,7 @@ config_ui() {
 	log_info "Configure theming"
 
 	execute_occ_command theming:config name "HiDrive Next"
-	execute_occ_command theming:config slogan "powered by IONOS"
+	execute_occ_command theming:config slogan ""
 	execute_occ_command theming:config imprintUrl " "
 	execute_occ_command theming:config privacyUrl " "
 	execute_occ_command theming:config primary_color "#003D8F"

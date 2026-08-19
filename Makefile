@@ -27,12 +27,11 @@ CUSTOM_COMPOSER_APPS = nc_ionos_processes
 EXTERNAL_FULL_APPS = richdocuments user_oidc viewer
 # Apps with special build targets (not in the standard categories above)
 # These apps have dedicated build_<app>_app targets with custom build logic
-SPECIAL_BUILD_APPS = nc_theming notify_push
+SPECIAL_BUILD_APPS = notify_push
 
 # Metadata for generate_apps_matrix_json: "name|path|has_npm|has_composer"
 # One entry per app in SPECIAL_BUILD_APPS — must be kept in sync.
 SPECIAL_BUILD_APPS_META = \
-	"nc_theming|apps-custom/nc_theming|false|true" \
 	"notify_push|apps-external/notify_push|false|true"
 
 # App folders to add to shipped.json (makes apps non-removable)
@@ -180,12 +179,6 @@ $(EXTERNAL_FULL_TARGETS): build_%_app:
 	$(call build_external_full_app,$(patsubst build_%_app,%,$@))
 
 # Special build targets — custom logic that doesn't fit the standard categories
-
-build_nc_theming_app: ## Build the custom css
-	@echo "[i] Building nc_theming app..."
-	cd apps-custom/nc_theming && \
-	$(MAKE) build_css
-	@echo "[✓] nc_theming app built successfully"
 
 # notify_push binary target: downloads the pre-built binary from GitHub releases
 $(NOTIFY_PUSH_BINARY): $(NOTIFY_PUSH_DIR)/appinfo/info.xml
