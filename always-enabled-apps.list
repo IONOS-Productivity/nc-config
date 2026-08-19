@@ -13,7 +13,6 @@
 #   - One app name per line
 #   - Lines starting with # are comments
 #   - Empty lines are ignored
-#   - Whitespace is trimmed
 #
 # This list is currently empty: no HiDrive Next apps have been decided as
 # always-enabled yet. Add entries here deliberately, on a case-by-case basis.

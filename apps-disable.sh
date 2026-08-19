@@ -100,7 +100,7 @@ ship_app() {
 }
 
 main() {
-	if ! which jq 2>&1 >/dev/null; then
+	if ! which jq >/dev/null 2>&1; then
 		log_fatal "jq is required"
 	fi
 

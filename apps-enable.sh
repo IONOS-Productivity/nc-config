@@ -142,7 +142,7 @@ enable_core_apps() {
 		printf "Checking core app: %s" "${app}"
 		if echo "${disabled_apps}" | grep -q -w ${app}; then
 
-			if echo "${DISABLED_APPS}" | grep -q -w ${app_name}; then
+			if echo "${DISABLED_APPS}" | grep -q -w ${app}; then
 				echo " - currently disabled - skipping due to being in DISABLED_APPS"
 				continue
 			fi
