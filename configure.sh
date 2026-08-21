@@ -40,18 +40,60 @@ readonly FAVICON_DIR
 readonly ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
 readonly ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.net}
 
-# Load disabled apps configuration
-. "${SCRIPT_DIR}/disabled-apps.inc.sh"
+# Read app list from file, ignoring comments and empty lines
+# Usage: read_app_list <file_path>
+read_app_list() {
+	_list_file="${1}"
+	if [ ! -f "${_list_file}" ]; then
+		echo ""
+		return
+	fi
+	grep -v '^[[:space:]]*#' "${_list_file}" | grep -v '^[[:space:]]*$' | tr '\n' ' '
+}
+
+DISABLED_APPS=$( read_app_list "${SCRIPT_DIR}/disabled-apps.list" )
 
 #===============================================================================
 # Utility Functions
 #===============================================================================
 
+#
+# OCC Helper Conventions — Sensitive Data
+# ----------------------------------------
+#   execute_occ_command <subcommand> [args...]
+#     General purpose. For commands that do NOT carry secrets.
+#     Use execute_occ_secret_command for any command where an argument may be sensitive.
+#
+#   execute_occ_secret_command <subcommand> [args...]
+#     For OCC commands that carry secrets. Arguments are NOT logged on failure to
+#     prevent accidental secret exposure. Only the subcommand name is recorded.
+#
+# Rule: always call execute_occ_secret_command directly for sensitive commands.
+
 # Execute NextCloud OCC command with error handling
 # Usage: execute_occ_command <command> [args...]
 execute_occ_command() {
+	# Safety net: --secret/--sensitive means a secret is in the args; delegate to execute_occ_secret_command.
+	# Must run before any logging that would expose ${*}.
+	if echo "${*}" | grep -qE -- "--secret|--sensitive"; then
+		log_warning "execute_occ_command called with --secret/--sensitive; use execute_occ_secret_command instead. Delegating."
+		execute_occ_secret_command "${@}"
+		return $?
+	fi
+
 	if ! php occ "${@}"; then
 		log_error "Failed to execute OCC command: ${*}"
+		return 1
+	fi
+}
+
+# Execute any OCC command that contains sensitive data.
+# Arguments are NOT logged on failure to prevent accidental secret exposure.
+# Only the subcommand name is recorded.
+# Usage: execute_occ_secret_command <subcommand> [args...]
+execute_occ_secret_command() {
+	if ! php occ "${@}"; then
+		log_error "Failed to execute sensitive OCC command: ${1} [args not logged]"
 		return 1
 	fi
 }
@@ -81,11 +123,35 @@ log_info() {
 	echo "[i] ${*}"
 }
 
+# Validate required environment variables
+# Usage: validate_env_vars <var1> <var2> ...
+# Returns: 0 if all variables are set, 1 otherwise
+validate_env_vars() {
+	_validation_failed=false
+
+	for _var in "${@}"; do
+		eval "_value=\${${_var}}"
+		if [ -z "${_value}" ]; then
+			log_warning "${_var} environment variable is not set"
+			_validation_failed=true
+		fi
+	done
+
+	if [ "${_validation_failed}" = "true" ]; then
+		return 1
+	fi
+	return 0
+}
+
 # Check if required dependencies are available
 # Usage: check_dependencies
 check_dependencies() {
 	if ! which php >/dev/null 2>&1; then
 		log_fatal "php is required but not found in PATH"
+	fi
+
+	if ! which jq >/dev/null 2>&1; then
+		log_fatal "jq is required but not found in PATH"
 	fi
 }
 
@@ -154,15 +220,14 @@ config_ui() {
 configure_ionos_processes_app() {
 	log_info "Configuring nc_ionos_processes app..."
 
-	# Check required environment variables
-	if [ -z "${IONOS_PROCESSES_API_URL}" ] || [ -z "${IONOS_PROCESSES_USER}" ] || [ -z "${IONOS_PROCESSES_PASS}" ]; then
-		log_warning "IONOS_PROCESSES_API_URL, IONOS_PROCESSES_USER or IONOS_PROCESSES_PASS not set, skipping configuration of nc_ionos_processes app"
+	if ! validate_env_vars IONOS_PROCESSES_API_URL IONOS_PROCESSES_USER IONOS_PROCESSES_PASS; then
+		log_warning "skipping configuration of nc_ionos_processes app"
 		return 0
 	fi
 
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_API_URL}" --type string nc_ionos_processes ionos_mail_base_url
 	execute_occ_command config:app:set --value "${IONOS_PROCESSES_USER}" --type string nc_ionos_processes basic_auth_user
-	execute_occ_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
+	execute_occ_secret_command config:app:set --value "${IONOS_PROCESSES_PASS}" --sensitive --type string nc_ionos_processes basic_auth_pass
 }
 
 # Configure serverinfo app with authentication token
@@ -175,7 +240,7 @@ configure_serverinfo_app() {
 		return 0
 	fi
 
-	execute_occ_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
+	execute_occ_secret_command config:app:set serverinfo token --value "${NC_APP_SERVERINFO_TOKEN}"
 }
 
 # Configure notify_push app
@@ -210,13 +275,8 @@ configure_app_notify_push() {
 configure_app_richdocuments() {
 	execute_occ_command app:disable richdocuments
 
-	# Validate required environment variables
-	if ! [ "${COLLABORA_HOST}" ]; then
-		log_fatal "COLLABORA_HOST environment variable is not set"
-	fi
-
-	if ! [ "${COLLABORA_EDIT_GROUPS}" ]; then
-		log_fatal "COLLABORA_EDIT_GROUPS environment variable is not set"
+	if ! validate_env_vars COLLABORA_HOST COLLABORA_EDIT_GROUPS; then
+		log_fatal "required Collabora environment variables are not set"
 	fi
 
 	# Configure and enable Collabora
