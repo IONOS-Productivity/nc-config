@@ -146,7 +146,8 @@ build_nextcloud_dev:  ## Build HiDrive Next only for development
 	set -e && \
 	composer install --no-dev -o && \
 	npm ci && \
-	NODE_OPTIONS="--max-old-space-size=4096" npm run dev
+	NODE_OPTIONS="--max-old-space-size=4096" npm run dev && \
+	npm run sass:icons
 	@echo "[i] HiDrive Next built for dev"
 
 # Common macros for standard build categories
