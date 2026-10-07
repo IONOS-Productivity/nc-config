@@ -3,6 +3,7 @@
 
 # Build configuration
 TARGET_PACKAGE_NAME = hidrivenext-server.zip
+PROJECT_NAME = nc-server
 
 ARCHITECTURE = x86_64
 
@@ -233,9 +234,19 @@ patch_shipped_json: .precheck ## Patch shipped.json
 version.json: .precheck ## Generate version file
 	@echo "[i] Generating version.json..."
 	buildDate=$$(date +%s) && \
+	buildDateIso=$$(php -r 'echo gmdate("Y-m-d\\TH:i:s\\Z", (int) $$argv[1]);' "$$buildDate") && \
 	buildRef=$$(git rev-parse --short HEAD) && \
+	buildBranch=$${GITHUB_REF_NAME:-$$(git branch --show-current)} && \
 	ncVersion=$$(php -r 'include("version.php");echo implode(".", $$OC_Version);') && \
-	jq -n --arg buildDate $$buildDate --arg buildRef $$buildRef  --arg ncVersion $$ncVersion '{buildDate: $$buildDate, buildRef: $$buildRef, ncVersion: $$ncVersion}' > version.json && \
+	jq -n \
+		--arg project "$(PROJECT_NAME)" \
+		--arg ncVersion "$$ncVersion" \
+		--arg buildBranch "$$buildBranch" \
+		--arg buildRef "$$buildRef" \
+		--arg buildDateIso "$$buildDateIso" \
+		--arg buildDate "$$buildDate" \
+		--arg notice "Static file, may be cached by the browser. Hard reload (Ctrl+Shift+R / Cmd+Shift+R) to see the current build." \
+		'{project: $$project, ncVersion: $$ncVersion, buildBranch: $$buildBranch, buildRef: $$buildRef, buildDateIso: $$buildDateIso, buildDate: $$buildDate, _notice: $$notice}' > version.json && \
 	echo "[i] version.json created" && \
 	jq . version.json
 
