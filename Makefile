@@ -222,7 +222,7 @@ version.json: .precheck ## Generate version file
 	buildDate=$$(date +%s) && \
 	buildDateIso=$$(php -r 'echo gmdate("Y-m-d\\TH:i:s\\Z", (int) $$argv[1]);' "$$buildDate") && \
 	buildRef=$$(git rev-parse --short HEAD) && \
-	buildBranch=$${GITHUB_REF_NAME:-$$(git branch --show-current)} && \
+	buildBranch=$${GITHUB_HEAD_REF:-$${GITHUB_REF_NAME:-$$(git branch --show-current)}} && \
 	ncVersion=$$(php -r 'include("version.php");echo implode(".", $$OC_Version);') && \
 	jq -n \
 		--arg project "$(PROJECT_NAME)" \
