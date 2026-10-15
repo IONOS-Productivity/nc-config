@@ -60,6 +60,36 @@ $CONFIG = (static function (): array {
 			'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/00311',
 			'ionos_homepage' => 'https://ionos.it/',
 		],
+		'CA' => [
+			'ionos_peer_products' => [
+				'ionos_webmail_target_link' => 'https://email.ionos.ca',
+			],
+			'ionos_help_target_link' => 'https://wl.hidrive.com/easy/helpca',
+			'ionos_security_target_link' => 'https://my.ionos.ca/productuser/security',
+			'ionos_customclient_android' => 'https://wl.hidrive.com/easy/androidca',
+			'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/iosca',
+			'ionos_homepage' => 'https://wl.hidrive.com/easy/0098',
+		],
+		'MX' => [
+			'ionos_peer_products' => [
+				'ionos_webmail_target_link' => 'https://email.ionos.mx',
+			],
+			'ionos_help_target_link' => 'https://wl.hidrive.com/easy/helpmx',
+			'ionos_security_target_link' => 'https://my.ionos.mx/productuser/security',
+			'ionos_customclient_android' => 'https://wl.hidrive.com/easy/androidmx',
+			'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/iosmx',
+			'ionos_homepage' => 'https://wl.hidrive.com/easy/0100',
+		],
+		'US' => [
+			'ionos_peer_products' => [
+				'ionos_webmail_target_link' => 'https://email.ionos.com',
+			],
+			'ionos_help_target_link' => 'https://wl.hidrive.com/easy/helpus',
+			'ionos_security_target_link' => 'https://my.ionos.com/productuser/security',
+			'ionos_customclient_android' => 'https://wl.hidrive.com/easy/androidus',
+			'ionos_customclient_ios' => 'https://wl.hidrive.com/easy/iosus',
+			'ionos_homepage' => 'https://wl.hidrive.com/easy/0099',
+		],
 	];
 
 	if (!isset($marketLinks[$market])) {
