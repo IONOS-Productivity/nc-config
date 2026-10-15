@@ -17,6 +17,9 @@ endsessionendpointuri() {
 		LIVE:ES)     echo 'https://id.ionos.es/logout' ;;
 		LIVE:IT)     echo 'https://id.ionos.it/logout' ;;
 		LIVE:GB)     echo 'https://id.ionos.co.uk/logout' ;;
+		LIVE:CA)     echo 'https://id.ionos.ca/logout' ;;
+		LIVE:MX)     echo 'https://id.ionos.mx/logout' ;;
+		LIVE:US)     echo 'https://id.ionos.com/logout' ;;
 	esac
 }
 
@@ -32,6 +35,9 @@ postlogouturi() {
 		LIVE:ES)     echo 'https://storage.ionos.es' ;;
 		LIVE:IT)     echo 'https://storage.ionos.it' ;;
 		LIVE:GB)     echo 'https://storage.ionos.co.uk' ;;
+		LIVE:CA)     echo 'https://storage.ionos.ca' ;;
+		LIVE:MX)     echo 'https://storage.ionos.mx' ;;
+		LIVE:US)     echo 'https://storage.ionos.com' ;;
 	esac
 }
 
