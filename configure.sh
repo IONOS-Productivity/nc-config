@@ -48,7 +48,14 @@ log_market_config() {
 # fails with "conflict between new type (mixed) and old type (integer)". Config
 # values listed as bare numbers/booleans are typed, so drop those rows and let
 # theming:config recreate them.
+# Only for Nextcloud < 32: from v32 on these keys are meant to be typed, so the
+# rows would match on every run and cachebuster would be reset on each deploy.
 reset_typed_theming_config() {
+	_major=$(ooc status 2>/dev/null | sed -n 's/^ *- versionstring: *\([0-9][0-9]*\)\..*/\1/p')
+	if [ -z "${_major}" ] || [ "${_major}" -ge 32 ]; then
+		return 0
+	fi
+
 	_theming_config=$(ooc config:list theming 2>/dev/null)
 	for _key in cachebuster disable-user-theming; do
 		if echo "${_theming_config}" | grep -Eq "\"${_key}\": ([0-9]|true|false)"; then
