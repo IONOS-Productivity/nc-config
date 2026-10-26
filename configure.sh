@@ -43,8 +43,25 @@ log_market_config() {
 	done
 }
 
+# Nextcloud 30 writes the theming keys below with the "mixed" type. If a row was
+# stored with a concrete type (int/bool) by other code, every theming:config call
+# fails with "conflict between new type (mixed) and old type (integer)". Config
+# values listed as bare numbers/booleans are typed, so drop those rows and let
+# theming:config recreate them.
+reset_typed_theming_config() {
+	_theming_config=$(ooc config:list theming 2>/dev/null)
+	for _key in cachebuster disable-user-theming; do
+		if echo "${_theming_config}" | grep -Eq "\"${_key}\": ([0-9]|true|false)"; then
+			echo "Resetting typed theming config key: ${_key}"
+			ooc config:app:delete theming "${_key}"
+		fi
+	done
+}
+
 config_ui() {
 	echo "Configure theming"
+
+	reset_typed_theming_config
 
 	ooc theming:config name "HiDrive Next"
 	ooc theming:config slogan "powered by IONOS"
