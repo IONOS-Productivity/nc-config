@@ -8,4 +8,6 @@
 $CONFIG = [
 	// Disable custom lookup server to avoid publishing user data
 	'lookup_server' => '',
+	# 'ionos_brand' => (string) getenv('IONOS_BRAND') ?: 'IONOS',
+	# 'ionos_product_name' => (string) getenv('IONOS_PRODUCT_NAME') ?: 'HiDrive Next',
 ];
